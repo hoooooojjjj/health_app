@@ -1,23 +1,16 @@
+import styles from './page.module.css'
+
 export default function Home() {
   return (
-    <main style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#0a0a0a',
-      color: '#ffffff',
-      fontFamily: 'system-ui, sans-serif',
-      textAlign: 'center',
-      padding: '2rem'
-    }}>
-      <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+    /* CSS Module을 적용한 전체 레이아웃 컨테이너 */
+    <main className={styles.mainContainer}>
+      <h1 className={styles.title}>
         Health App
       </h1>
-      <p style={{ color: '#888888', fontSize: '1.1rem', maxWidth: '600px', lineHeight: '1.6' }}>
-        Successfully initialized with Next.js and Supabase SSR authentication utilities.
-        Start building your application by editing <code>src/app/page.tsx</code>.
+      <p className={styles.description}>
+        Next.js와 Supabase SSR 인증 유틸리티 초기 설정이 성공적으로 완료되었습니다.
+        <br />
+        <code className={styles.codeHighlight}>src/app/page.tsx</code> 파일을 수정하여 애플리케이션 개발을 시작하세요.
       </p>
     </main>
   )

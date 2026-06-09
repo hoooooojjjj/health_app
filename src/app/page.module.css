@@ -1,0 +1,43 @@
+/* 메인 레이아웃 컨테이너 */
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  font-family: 'system-ui', -apple-system, sans-serif;
+  text-align: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* 메인 제목 스타일 */
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.02em;
+}
+
+/* 보조 설명 텍스트 스타일 */
+.description {
+  color: #888888;
+  font-size: 1.1rem;
+  max-width: 600px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 코드 강조용 인라인 코드 블록 */
+.codeHighlight {
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #a78bfa;
+}
