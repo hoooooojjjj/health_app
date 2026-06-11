@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
 
 // ES Module __dirname 설정
@@ -12,19 +12,14 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 // 환경 변수에서 API 키를 읽습니다. (없으면 에러)
-// 실행 전: export GEMINI_API_KEY="your_api_key" 또는 .env.local 에 추가하세요.
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
-  console.error('❌ 에러: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.');
+  console.error('❌ 에러: ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다. .env.local에 추가해주세요.');
   process.exit(1);
 }
 
-const genAI = new GoogleGenerativeAI(apiKey);
-// JSON 형식을 더 잘 반환하도록 최신 모델 사용 권장
-const model = genAI.getGenerativeModel({ 
-  model: 'gemini-2.5-flash',
-  generationConfig: { responseMimeType: "application/json" }
-});
+const anthropic = new Anthropic({ apiKey });
+const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 
 // 파일 경로 설정
 const RAW_FILE_PATH = path.join(__dirname, 'raw_exercises.json');
@@ -126,13 +121,23 @@ async function main() {
 
     try {
       const prompt = buildPrompt(exercise);
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      const response = await anthropic.messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: 2048,
+        system: "반드시 JSON 형식으로만 응답해야 합니다. 다른 말은 절대 덧붙이지 마세요.",
+        messages: [{ role: 'user', content: prompt }]
+      });
+      const responseText = response.content[0].text;
       
-      // JSON 파싱 시도
+      // JSON 파싱 시도 (마크다운 백틱 코드블록이 존재한다면 제거)
+      let cleanText = responseText.trim();
+      if (cleanText.startsWith('```')) {
+        cleanText = cleanText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+      }
+      
       let parsedItem;
       try {
-        parsedItem = JSON.parse(responseText);
+        parsedItem = JSON.parse(cleanText);
       } catch (err) {
         console.error(`❌ [${exercise.name}] JSON 파싱 실패. 응답 전문:`, responseText);
         // 에러가 나도 스크립트가 죽지 않도록 continue 처리
