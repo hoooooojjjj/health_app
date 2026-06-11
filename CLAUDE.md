@@ -1,6 +1,9 @@
 # Health App 개발 가이드 (Next.js + Supabase SSR)
 
-이 문서는 프로젝트의 빌드/실행 명령어, 파일 구조 및 개발 시 준수해야 할 코딩 규칙을 정리한 문서입니다. AI 코딩 에이전트(Antigravity 등)가 작업을 진행할 때 이 규칙을 최우선으로 참고합니다.
+이 문서는 프로젝트의 빌드/실행 명령어, 파일 구조 및 개발 시 준수해야 할 코딩 규칙을 정리한 **실무 지침서**입니다. 
+*프로젝트의 비즈니스 배경지식, 기획 의도 및 아키텍처 다이어그램은 [README.md](file:///Users/ryuhojun/Documents/project/health_app/README.md)에서 확인하실 수 있습니다.*
+
+AI 코딩 에이전트(Antigravity 등)가 작업을 진행할 때 이 문서의 규칙을 최우선으로 참고합니다.
 
 ---
 
