@@ -38,6 +38,18 @@
 * 배포 시 Vercel Dashboard의 Environment Variables에 다음 환경 변수가 필수 추가되어야 합니다.
   * `NEXT_PUBLIC_SUPABASE_URL`
   * `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  * `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Web Push용 VAPID 공개 키)
+  * `VAPID_PRIVATE_KEY` (Web Push용 VAPID 비공개 키)
+  * `VAPID_MAILTO` (Web Push용 이메일 주소, 예: `mailto:rhj080471@gmail.com`)
+
+### 4) Web Push Notifications (PWA)
+* **iOS PWA Support**: iOS 환경(iOS 16.4+)에서 백그라운드 푸시 알림을 수신하기 위해서는 반드시 Safari 브라우저에서 **"홈 화면에 추가(Add to Home Screen)"**를 통해 독립된 Standalone 웹앱 형태로 실행해야 합니다. 일반 브라우저 탭 상태에서는 푸시 알림 등록 및 수신이 제한됩니다.
+* **Service Worker & PWA Config**:
+  * [public/sw.js](file:///Users/ryuhojun/Documents/project/health_app/public/sw.js): 백그라운드 푸시 이벤트(`push`)를 수신하여 기기에 알림을 노출하고, 알림 클릭(`notificationclick`) 시 기존에 열린 웹앱 창을 포커싱하거나 새로운 창을 띄웁니다.
+  * [public/manifest.json](file:///Users/ryuhojun/Documents/project/health_app/public/manifest.json): 모바일 환경에서 이 웹 애플리케이션을 단독 앱(PWA) 스타일로 인식하도록 아이콘, 테마 색상, 실행 모드(`standalone`) 등을 선언합니다.
+* **Push Notification APIs**:
+  * [src/app/api/push/subscribe/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/subscribe/route.ts): 브라우저(서비스 워커)에서 발급받은 알림 구독 객체(PushSubscription)를 수신하여 메모리 또는 데이터베이스에 저장/갱신/삭제합니다.
+  * [src/app/api/push/send/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/send/route.ts): 저장된 구독 객체로 웹 푸시 알림을 발송합니다. 타이머 지연 발송(`delaySeconds`) 기능을 제공하며, 서버리스 함수 실행 제한 시간을 위해 `maxDuration = 60`(초)이 설정되어 있습니다.
 
 ---
 
