@@ -1,43 +1,380 @@
-/* 메인 레이아웃 컨테이너 */
-.mainContainer {
+/* =============================================================
+   page.module.css — Design System Demo Page
+   ============================================================= */
+
+/* ---- Wrapper ---- */
+.wrapper {
+  min-height: 100svh;
+  display: flex;
+  justify-content: center;
+  background-color: var(--bg-base);
+}
+
+/* ---- App Container (mobile-frame) ---- */
+.appContainer {
+  position: relative;
+  width: 100%;
+  max-width: var(--app-max-width);
+  min-height: 100svh;
+  background-color: var(--bg-app);
+  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Background FX ---- */
+.bgGrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-bg);
+  opacity: 0.03;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bgScanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-bg);
+  opacity: 0.08;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.8) 2px,
+    rgba(0, 0, 0, 0.8) 4px
+  );
+}
+
+/* ---- Header ---- */
+.header {
+  padding: 48px 20px 16px;
+  position: relative;
+  z-index: var(--z-base);
+}
+
+.labelSystem {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--text-muted);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.pageTitle {
+  margin-top: 12px;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ---- Main ---- */
+.main {
+  flex: 1;
+  padding: 24px 16px 100px;
+  position: relative;
+  z-index: var(--z-base);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fade-in 300ms ease;
+}
+
+/* ---- Section Label ---- */
+.label {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ---- Section wrapper ---- */
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Card ---- */
+.card {
+  position: relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+/* 코너 L자 액센트 */
+.card::before,
+.card::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--border-strong);
+  border-style: solid;
+}
+.card::before {
+  top: -1px; left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.card::after {
+  top: -1px; right: -1px;
+  border-width: 1px 1px 0 0;
+}
+
+/* ---- Color Palette ---- */
+.colorGrid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.colorSwatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.colorBox {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-default);
+}
+
+.colorLabel {
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  letter-spacing: var(--tracking-widest);
+}
+
+/* ---- Status Pill ---- */
+.statusPill {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-card);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.statusPillDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--accent-green);
+  box-shadow: var(--glow-green-dot);
+  animation: pulse-dot 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.statusPillText {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-wider);
+}
+
+/* ---- Buttons ---- */
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 1px solid var(--accent-green-border);
+  background-color: var(--accent-green-dim);
+  color: var(--accent-green-light);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-wide);
+  transition: all var(--transition-fast);
+  box-shadow: var(--glow-green);
+}
+.btnPrimary:hover {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-color: var(--accent-green-border-hover);
+  box-shadow: var(--glow-green-strong);
+}
+.btnPrimary:active { transform: scale(0.95); }
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 1px solid var(--border-default);
+  background-color: transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  transition: all var(--transition-fast);
+}
+.btnGhost:hover {
+  color: var(--accent-green-light);
+  border-color: var(--accent-green-border);
+  background-color: var(--accent-green-dim);
+}
+.btnGhost:active { transform: scale(0.95); }
+
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--accent-green-border);
+  background-color: transparent;
+  color: var(--accent-green-light);
+  transition: all var(--transition-fast);
+}
+.btnIcon:hover { background-color: var(--accent-green-dim); }
+.btnIcon:active { transform: scale(0.95); }
+
+/* ---- Dot Indicators ---- */
+.dotRow {
+  display: flex;
+  gap: 20px;
+}
+
+.dotItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.dotGreen {
+  background-color: var(--accent-green);
+  box-shadow: var(--glow-green-dot);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.dotYellow {
+  background-color: var(--accent-yellow);
+  box-shadow: var(--glow-yellow-dot);
+}
+
+.dotBlue {
+  background-color: var(--accent-blue);
+  box-shadow: var(--glow-blue-dot);
+}
+
+/* ---- Typography ---- */
+.typoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.titlePage {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+.titleSection {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--accent-green-light);
+  letter-spacing: var(--tracking-tight);
+}
+
+.bodyText {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.numDisplay {
+  font-size: var(--fs-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Bottom Nav ---- */
+.bottomNav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  border-top: 1px solid var(--border-default);
+  background-color: var(--bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+
+.navItem {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #ffffff;
-  font-family: 'system-ui', -apple-system, sans-serif;
-  text-align: center;
-  padding: 2rem;
-  box-sizing: border-box;
+  gap: 4px;
+  width: 64px;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  transition: color var(--transition-fast);
+  position: relative;
+}
+.navItem:hover { color: var(--text-secondary); }
+
+.navItemActive {
+  color: var(--accent-green-light);
+  font-weight: 700;
+}
+/* 상단 글로우 바 */
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2px;
+  background-color: var(--accent-green-light);
+  box-shadow: var(--glow-green-strong);
+  border-radius: 0 0 4px 4px;
 }
 
-/* 메인 제목 스타일 */
-.title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.02em;
-}
-
-/* 보조 설명 텍스트 스타일 */
-.description {
-  color: #888888;
-  font-size: 1.1rem;
-  max-width: 600px;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* 코드 강조용 인라인 코드 블록 */
-.codeHighlight {
-  font-family: monospace;
-  background-color: rgba(255, 255, 255, 0.08);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  color: #a78bfa;
+.navIcon {
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  border-radius: 2px;
 }
