@@ -17,7 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Health App",
   description: "나의 운동과 건강을 기록하는 앱",
-  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Health App",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +36,29 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body>{children}</body>
+      <head>
+        <meta name="theme-color" content="#09090b" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
+      <body>
+        {children}
+        {/* Service Worker 등록 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(reg) { console.log('[SW] 등록됨:', reg.scope); })
+                    .catch(function(err) { console.warn('[SW] 등록 실패:', err); });
+                });
+              }
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }
