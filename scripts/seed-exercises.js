@@ -1,0 +1,171 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import dotenv from 'dotenv';
+
+// ES Module __dirname 설정
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 최상위 .env.local 또는 .env 로드
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+
+// 환경 변수에서 API 키를 읽습니다. (없으면 에러)
+// 실행 전: export GEMINI_API_KEY="your_api_key" 또는 .env.local 에 추가하세요.
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.error('❌ 에러: GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.');
+  process.exit(1);
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+// JSON 형식을 더 잘 반환하도록 최신 모델 사용 권장
+const model = genAI.getGenerativeModel({ 
+  model: 'gemini-2.5-flash',
+  generationConfig: { responseMimeType: "application/json" }
+});
+
+// 파일 경로 설정
+const RAW_FILE_PATH = path.join(__dirname, 'raw_exercises.json');
+const OUTPUT_FILE_PATH = path.join(__dirname, 'translated_exercises.json');
+
+// 유틸리티: 대기 시간(Delay)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// CLI 인자 파싱
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let limit = 1000; // 기본 처리 개수 (거의 무제한)
+  let delayMs = 5000; // 기본 대기 시간 5초 (Rate Limit 방어용)
+
+  args.forEach((arg) => {
+    if (arg.startsWith('--limit=')) {
+      limit = parseInt(arg.split('=')[1], 10);
+    } else if (arg.startsWith('--delay=')) {
+      delayMs = parseInt(arg.split('=')[1], 10);
+    }
+  });
+
+  return { limit, delayMs };
+}
+
+// 번역/정제 프롬프트 생성
+function buildPrompt(exercise) {
+  return `
+다음 영문 피트니스 운동 정보를 분석하여 한국어 앱의 마스터 데이터에 맞게 의학적, 생리학적으로 매우 상세하고 정교하게 가공해 주세요.
+결과는 반드시 JSON 형식으로만 반환해야 합니다. 다른 말은 절대 덧붙이지 마세요.
+
+[사용자 신체 제약 조건 (safety_tips 반영용)]
+- 요추 디스크(추간판 탈출증) 있음: 척추 수직 압박(Compression) 및 과신전(Extension) 극도로 주의.
+- 왼쪽 어깨 불균형 및 가동성 부족: 상완골 외회전 제약, 어깨 찝힘(충돌 증후군) 발생 가능성 높음.
+- 키 183cm, 긴 팔다리(Reach): 긴 가동 범위로 인한 관절 부하 증가 우려.
+
+[원본 데이터]
+- Name: ${exercise.name}
+- Muscle Group: ${exercise.muscleGroup}
+- Equipment: ${exercise.equipment}
+- Instructions: ${exercise.instructions}
+
+[응답 JSON 스키마 조건]
+{
+  "name": "운동의 자연스러운 한국어 명칭 (ex: 바벨 벤치 프레스)",
+  "original_name": "${exercise.name}",
+  "target_muscle": "주동근 (UPPER_CHEST, MID_CHEST, LOWER_CHEST, LATS, UPPER_BACK, LOWER_BACK, FRONT_SHOULDER, LATERAL_SHOULDER, REAR_SHOULDER, QUADS, HAMSTRINGS, GLUTES, CALVES, BICEPS, TRICEPS, FOREARMS, ABS, OBLIQUES 중 가장 적절한 것 1개 선택)",
+  "synergist_muscles": ["협응근 배열 (위와 동일한 대문자 Enum 값 중 매핑)"],
+  "equipment_type": "DUMBBELL, BARBELL, MACHINE, CABLE, BODYWEIGHT, ASSISTED 중 1개로 매핑",
+  "weight_multiplier": 덤벨이면 2.0, 그 외 바벨/머신/케이블은 1.0. 맨몸/어시스트면 1.0,
+  "is_unilateral": "한쪽씩 진행하는 운동(One Arm, Single Leg 등)이면 true, 아니면 false",
+  "spinal_compression_level": "요추 압박 또는 허리 과신전 위험도 (0: 없음, 1: 보통, 2: 높음. 바벨 스쿼트, 데드리프트, 바벨 로우, 싯업 등 허리 굴곡/압박이 크면 2)",
+  "shoulder_impingement_risk": "어깨 찝힘(충돌) 위험도 (업라이트 로우, 비하인드 넥 프레스, 과도한 내회전이 가해지는 운동 등은 true, 아니면 false)",
+  "posture_guide": "일반인 기준으로 이 운동을 정석대로 수행하기 위한 가이드입니다. 반드시 '1. [준비 자세 설명]\\n2. [수행 동작 설명]\\n3. [마무리 또는 자극점 인지]\\n'과 같이 번호와 줄바꿈 기호(\\n)를 명확하게 적용하여 단계별로 친절하게 서술해 주세요. (예: '1. 벤치에 바르게 눕습니다.\\n2. 바를 들어 가슴 앞으로 가져옵니다.\\n')",
+  "safety_tips": "이 운동이 요추 디스크 환자(수직 압박 및 요추 굴곡/과신전 주의)와 왼쪽 어깨 가동성 부족(찝힘 주의)을 겪는 사용자에게 미치는 구체적 영향과 맞춤형 대처 방안(예: 벤치에 발 올리기, 가동범위 제한 등)을 아주 상세하게 서술해 주세요. 줄바꿈 시 반드시 \\n 기호를 사용하여 깔끔하게 구문이 나누어지게 하세요. 만약 이 운동이 해당 부위에 너무 치명적이고 위험할 경우, 안전하게 대체하여 수행할 수 있는 구체적인 대체 운동(ex: '대체 운동: 플랭크, 데드버그')을 반드시 포함하여 서술해 주세요."
+}`;
+}
+
+async function main() {
+  const { limit, delayMs } = parseArgs();
+  console.log(`🚀 [시작] 번역 프로세스 시작 (목표 갯수: ${limit}개 / 딜레이: ${delayMs}ms)`);
+
+  // 1. 원본 데이터 로드
+  if (!fs.existsSync(RAW_FILE_PATH)) {
+    console.error('❌ 원본 데이터 파일이 없습니다:', RAW_FILE_PATH);
+    process.exit(1);
+  }
+  const rawData = JSON.parse(fs.readFileSync(RAW_FILE_PATH, 'utf-8'));
+
+  // 2. 기존 진행 상황 로드 (Resumable 로직)
+  let translatedData = [];
+  let processedNames = new Set();
+
+  if (fs.existsSync(OUTPUT_FILE_PATH)) {
+    try {
+      translatedData = JSON.parse(fs.readFileSync(OUTPUT_FILE_PATH, 'utf-8'));
+      translatedData.forEach((item) => processedNames.add(item.original_name));
+      console.log(`✅ 기존 번역된 데이터 로드 완료: ${translatedData.length}개 항목 확인.`);
+    } catch (e) {
+      console.warn('⚠️ 출력 파일 파싱 에러 (새로 시작합니다):', e.message);
+    }
+  }
+
+  // 3. 번역 루프
+  let processedCount = 0;
+
+  for (const exercise of rawData) {
+    if (processedCount >= limit) {
+      console.log(`\n🛑 지정된 목표 갯수(${limit}개) 도달. 루프를 종료합니다.`);
+      break;
+    }
+
+    // 이미 처리된 항목 건너뛰기
+    if (processedNames.has(exercise.name)) {
+      continue;
+    }
+
+    console.log(`\n⏳ 처리 중: [${exercise.name}]...`);
+
+    try {
+      const prompt = buildPrompt(exercise);
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      // JSON 파싱 시도
+      let parsedItem;
+      try {
+        parsedItem = JSON.parse(responseText);
+      } catch (err) {
+        console.error(`❌ [${exercise.name}] JSON 파싱 실패. 응답 전문:`, responseText);
+        // 에러가 나도 스크립트가 죽지 않도록 continue 처리
+        continue;
+      }
+
+      // 번역할 필요가 없는 이미지/GIF 절대 URL은 직접 병합합니다.
+      parsedItem.gif_url = exercise.gif_url || '';
+      parsedItem.image = exercise.image || '';
+
+      // 결과 배열에 추가 및 로컬 파일에 즉시 쓰기 (세이브 포인트)
+      translatedData.push(parsedItem);
+      processedNames.add(exercise.name);
+      fs.writeFileSync(OUTPUT_FILE_PATH, JSON.stringify(translatedData, null, 2), 'utf-8');
+
+      console.log(`✅ 완료: [${parsedItem.name}] (장비: ${parsedItem.equipment_type})`);
+      processedCount++;
+
+      // Rate Limit 대기
+      if (processedCount < limit) {
+        console.log(`⏱️ API Rate Limit 보호를 위해 ${delayMs / 1000}초 대기합니다...`);
+        await sleep(delayMs);
+      }
+
+    } catch (error) {
+      console.error(`💥 [${exercise.name}] AI 요청 중 에러 발생:`, error.message);
+      console.log('API 에러로 인해 잠시 추가 대기(10초) 후 진행합니다.');
+      await sleep(10000);
+    }
+  }
+
+  console.log(`\n🎉 프로세스 종료. 총 ${translatedData.length}개의 마스터 데이터가 누적 저장되었습니다.`);
+  console.log(`👉 결과물 경로: ${OUTPUT_FILE_PATH}`);
+}
+
+main();
