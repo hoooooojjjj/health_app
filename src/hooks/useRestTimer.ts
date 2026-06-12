@@ -26,6 +26,7 @@ export function useRestTimer(): UseRestTimerReturn {
   // 내부 참조 (리렌더 없이 접근)
   const timerIdRef = useRef<string | null>(null)      // Supabase rest_timers.id
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const endTimeRef = useRef<number | null>(null)      // 타이머 종료 예정 시간 (절대 시간)
 
   // 카운트다운 인터벌 정리 유틸
   const clearCountdown = useCallback(() => {
@@ -33,7 +34,27 @@ export function useRestTimer(): UseRestTimerReturn {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
+    endTimeRef.current = null
   }, [])
+
+  // 앱이 백그라운드에서 포그라운드로 복귀할 때 즉시 시간 동기화
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && intervalRef.current && endTimeRef.current) {
+        const remain = Math.ceil((endTimeRef.current - Date.now()) / 1000)
+        if (remain <= 0) {
+          clearCountdown()
+          setStatus('done')
+          setRemainingSeconds(0)
+        } else {
+          setRemainingSeconds(remain)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [clearCountdown])
 
   // ── 타이머 시작 ──────────────────────────────────────────────
   const start = useCallback(
@@ -63,20 +84,21 @@ export function useRestTimer(): UseRestTimerReturn {
         setRemainingSeconds(seconds)
         setStatus('running')
 
-        const endTime = Date.now() + seconds * 1000
+        endTimeRef.current = Date.now() + seconds * 1000
 
+        // 매우 촘촘한 100ms 주기로 타이머의 정밀도를 극대화
         intervalRef.current = setInterval(() => {
-          const remain = Math.ceil((endTime - Date.now()) / 1000)
+          if (!endTimeRef.current) return
+          const remain = Math.ceil((endTimeRef.current - Date.now()) / 1000)
           
           if (remain <= 0) {
-            clearInterval(intervalRef.current!)
-            intervalRef.current = null
+            clearCountdown()
             setStatus('done')
             setRemainingSeconds(0)
           } else {
             setRemainingSeconds(remain)
           }
-        }, 500)
+        }, 100)
 
         return {}
       } catch (err) {
