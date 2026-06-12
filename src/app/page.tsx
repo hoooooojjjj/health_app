@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 import { usePush } from '@/providers/PushProvider'
 import { useRestTimer } from '@/hooks/useRestTimer'
 import styles from './page.module.css'
@@ -22,7 +24,10 @@ function formatTime(seconds: number): string {
 }
 
 export default function Home() {
-  const { isAuthReady, pushStatus, subscribe, unsubscribe } = usePush()
+  const router = useRouter()
+  const supabase = createClient()
+
+  const { pushStatus, subscribe, unsubscribe } = usePush()
   const { status: timerStatus, remainingSeconds, durationSec, start, cancel, reset } = useRestTimer()
 
   const [log, setLog] = useState<string[]>([])
@@ -31,6 +36,18 @@ export default function Home() {
   const addLog = useCallback((msg: string) => {
     setLog((prev) => [`[${new Date().toLocaleTimeString('ko-KR')}] ${msg}`, ...prev.slice(0, 9)])
   }, [])
+
+  // ── 로그아웃 ──
+  const handleLogout = useCallback(async () => {
+    addLog('🚪 로그아웃 중...')
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      addLog(`❌ 로그아웃 실패: ${error.message}`)
+    } else {
+      router.push('/login')
+      router.refresh()
+    }
+  }, [supabase, router, addLog])
 
   // ── 구독 ──
   const handleSubscribe = useCallback(async () => {
@@ -91,7 +108,12 @@ export default function Home() {
 
         {/* Header */}
         <header className={styles.header}>
-          <span className={styles.labelSystem}>// health_app / rest_timer_test</span>
+          <div className={styles.headerTop}>
+            <span className={styles.labelSystem}>// health_app / rest_timer_test</span>
+            <button className={styles.btnLogout} onClick={handleLogout}>
+              LOGOUT
+            </button>
+          </div>
           <h1 className={styles.pageTitle}>휴식 타이머</h1>
         </header>
 
@@ -120,13 +142,12 @@ export default function Home() {
                     className={styles.btnPrimary}
                     onClick={handleSubscribe}
                     disabled={
-                      !isAuthReady ||
                       pushStatus === 'requesting' ||
                       pushStatus === 'denied' ||
                       pushStatus === 'unsupported'
                     }
                   >
-                    {!isAuthReady ? '초기화 중...' : pushStatus === 'requesting' ? '요청 중...' : '🔔 알림 구독하기'}
+                    {pushStatus === 'requesting' ? '요청 중...' : '🔔 알림 구독하기'}
                   </button>
                 )}
               </div>

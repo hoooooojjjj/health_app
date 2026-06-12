@@ -57,6 +57,29 @@
   z-index: 10;
 }
 
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btnLogout {
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-default);
+  padding: 4px 8px;
+  background-color: transparent;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  letter-spacing: var(--tracking-wider);
+}
+
+.btnLogout:hover {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
 .labelSystem {
   display: block;
   font-size: var(--fs-2xs);
@@ -64,6 +87,7 @@
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
 }
+
 
 .pageTitle {
   margin-top: 10px;

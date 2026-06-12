@@ -7,7 +7,6 @@ import {
   useEffect,
   useState,
 } from 'react'
-import { createClient } from '@/utils/supabase/client'
 
 // ---- 타입 정의 ----
 export type PushStatus =
@@ -18,7 +17,6 @@ export type PushStatus =
   | 'unsupported'  // 브라우저 미지원
 
 interface PushContextValue {
-  isAuthReady: boolean        // Supabase 인증(익명 포함) 완료 여부
   pushStatus: PushStatus
   subscription: PushSubscription | null
   subscribe: () => Promise<void>
@@ -42,33 +40,12 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 
 // ---- Provider ----
 export function PushProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthReady, setIsAuthReady] = useState(false)
   const [pushStatus, setPushStatus] = useState<PushStatus>('idle')
   const [subscription, setSubscription] = useState<PushSubscription | null>(null)
 
-  // 마운트 시: Supabase 세션 확인 → 없으면 익명 로그인 → 서비스 워커 구독 상태 복원
+  // 마운트 시: 이미 서비스 워커 구독이 존재하는지 확인
   useEffect(() => {
-    const init = async () => {
-      // ── 1. 인증 초기화 (익명 로그인) ──────────────────────────────────────
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        // 세션이 없으면 자동 익명 로그인 시도
-        const { error } = await supabase.auth.signInAnonymously()
-        if (error) {
-          // 로그인 실패해도 UI를 멈추지 않음 (경고만 출력)
-          console.warn('[Auth] 익명 로그인 실패 (API 호출 시 401 발생할 수 있음):', error.message)
-        } else {
-          console.log('[Auth] 익명 로그인 완료')
-        }
-      } else {
-        console.log('[Auth] 기존 세션 유지:', user.id)
-      }
-
-      setIsAuthReady(true)
-
-      // ── 2. 서비스 워커 구독 상태 복원 ────────────────────────────────────
+    const checkExisting = async () => {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         setPushStatus('unsupported')
         return
@@ -88,7 +65,7 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
         // 서비스 워커 미준비 상태 → idle 유지
       }
     }
-    init()
+    checkExisting()
   }, [])
 
   // 알림 권한 요청 + 서비스 워커 구독 + DB 저장
@@ -153,7 +130,7 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
   }, [subscription])
 
   return (
-    <PushContext.Provider value={{ isAuthReady, pushStatus, subscription, subscribe, unsubscribe }}>
+    <PushContext.Provider value={{ pushStatus, subscription, subscribe, unsubscribe }}>
       {children}
     </PushContext.Provider>
   )
