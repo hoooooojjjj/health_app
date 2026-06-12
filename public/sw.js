@@ -13,23 +13,47 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
-  const data = event.data.json()
+  let data;
+  try {
+    data = event.data.json()
+  } catch (err) {
+    data = { body: event.data.text() }
+  }
 
+  const title = data.title || '🏋️ 휴식 완료!'
+  
+  // iOS 및 모바일 브라우저 호환성을 고려한 안전한 기본 옵션 구성
   const options = {
     body: data.body || '휴식 시간이 종료되었습니다.',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    vibrate: [200, 100, 200, 100, 200],
-    // 같은 tag로 중복 알림 방지 (최신 알림이 기존 알림을 덮어씀)
     tag: data.tag || 'rest-timer',
-    renotify: true,
     data: {
       url: data.url || '/',
     },
   }
 
+  // iOS Safari 등 일부 환경에서 vibrate 및 renotify 설정 시 알림이 묵살되거나 오류가 발생하는 현상 방지
+  // (renotify는 iOS Safari에서 미지원하며, vibrate 역시 브라우저 제한이 있을 수 있음)
+  try {
+    // 안드로이드/데스크톱 크롬 호환용 옵션 추가
+    if ('vibrate' in Notification.prototype) {
+      options.vibrate = [200, 100, 200, 100, 200]
+    }
+  } catch (e) {
+    // 예외 발생 시 무시
+  }
+
   event.waitUntil(
-    self.registration.showNotification(data.title || '🏋️ 휴식 완료!', options)
+    self.registration.showNotification(title, options)
+      .catch((err) => {
+        console.error('[SW] showNotification 실패, 기본 옵션으로 재시도:', err)
+        // 실패 시 가장 기본적인 형태(title, body)로만 재시도하여 알림 유실 방지
+        return self.registration.showNotification(title, {
+          body: options.body,
+          data: options.data,
+        })
+      })
   )
 })
 

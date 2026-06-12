@@ -94,7 +94,9 @@ sequenceDiagram
 1. **[클라이언트]** `useRestTimer.start(durationSec)` 호출.
 2. **[Next.js API]** `POST /api/timer/start` 수신:
    - Supabase `rest_timers`에 `status: 'active'` 상태로 행 삽입.
-   - Upstash QStash에 `durationSec`초 만큼의 지연 메시지 예약 (콜백 타겟: `/api/push/fire`).
+   - **콜백 대상 URL 동적 결정**: Vercel 프리뷰 배포 및 프라이빗 도메인 등 동적인 호스트 환경에서 QStash 콜백이 올바른 인스턴스로 전달되도록 `process.env.VERCEL_URL` 대신 현재 요청의 `Host` 헤더(`request.headers.get('host')`)를 파싱하여 정확한 도메인으로 콜백 주소를 설정합니다.
+     * 단, 로컬 개발 환경(`localhost` 포함)에서는 QStash가 퍼블릭 인터넷을 통해 콜백할 수 없으므로, QStash 메시지 발송을 생략하고 응답에 `localMode: true`를 포함해 반환합니다.
+   - Upstash QStash에 `durationSec`초 만큼의 지연 메시지 예약 (콜백 타겟: `{appUrl}/api/push/fire`).
    - 발급된 QStash `messageId`를 DB에 기입.
 3. **[클라이언트]** 반환된 정보를 기반으로 로컬 카운트다운 타이머 UI 갱신 시작 (앱을 닫아도 백그라운드 발송은 무관).
 
@@ -152,7 +154,7 @@ sequenceDiagram
 *   **[`src/utils/supabase/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/middleware.ts)**: 요청 경로별 세션 제어 및 페이지 보호 미들웨어. `/api/push/fire` 및 서비스 워커 에셋은 DB 조회 전에 조기 허용하도록 최적화되어 있습니다.
 *   **[`src/providers/PushProvider.tsx`](file:///Users/ryuhojun/Documents/project/health_app/src/providers/PushProvider.tsx)**: 앱 전역 푸시 알림 구독 상태 관리 Context.
 *   **[`src/hooks/useRestTimer.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/hooks/useRestTimer.ts)**: 클라이언트 측 카운트다운 타이머 및 시작/취소 API 래핑 훅.
-*   **[`src/app/api/timer/start/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/start/route.ts)**: 타이머 생성 및 QStash 예약.
+*   **[`src/app/api/timer/start/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/start/route.ts)**: 타이머 생성 및 QStash 예약 (`Host` 헤더 기반 동적 URL 확인 및 로컬 테스트 분기 포함).
 *   **[`src/app/api/timer/cancel/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/cancel/route.ts)**: 타이머 DB 상태를 `cancelled`로 변경.
 *   **[`src/app/api/push/fire/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/fire/route.ts)**: QStash 콜백 수신 및 실제 푸시 발송 처리 (`createAdminClient` 사용).
 *   **[`src/app/api/push/subscribe/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/subscribe/route.ts)**: 푸시 구독 정보를 Supabase에 UPSERT/DELETE.
@@ -165,3 +167,8 @@ sequenceDiagram
 2. 하단 공유 버튼을 눌러 **"홈 화면에 추가"**를 실행합니다.
 3. 홈 화면에 설치된 PWA 아이콘으로 진입하여 알림 권한을 **허용**합니다.
 4. 알림 구독 후 타이머를 시작하고 앱을 닫거나 단말 잠금을 수행해 백그라운드 푸시 동작을 확인합니다.
+
+### ⚠️ iOS Web Push 제한 및 중요 주의사항
+*   **`renotify: true` 및 `vibrate` 미지원 문제**: iOS Safari/PWA 환경에서는 `renotify` 옵션을 지원하지 않습니다. 지원하지 않는 속성(`renotify: true`, 기기별 비표준 `vibrate` 옵션 등)이 `showNotification` 옵션에 포함되어 있을 경우, 알림 발송 Promise가 거절(Reject)되거나 시스템에 의해 알림이 무시될 수 있습니다.
+    *   **해결책**: `sw.js` 내에서 지원 여부를 확인하여 `vibrate`는 조건부 삽입하고, `renotify`는 제거하였으며, 혹시 모를 에러 발생 시 기본적인 타이틀과 메시지만 구성해 재호출하는 폴백(`catch`) 메커니즘을 추가했습니다.
+*   **Service Worker 업데이트 캐시**: 이미 모바일 기기 홈 화면에 추가되어 있던 PWA는 이전 버전의 `sw.js`가 브라우저에 캐싱되어 있을 수 있습니다. 최신 수정된 서비스 워커(`public/sw.js`)가 적용되기 위해서는 **기존에 설치된 PWA를 완전히 삭제하고 다시 "홈 화면에 추가"하여 실행**해야 합니다.
