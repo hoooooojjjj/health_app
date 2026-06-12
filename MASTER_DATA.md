@@ -86,11 +86,18 @@ node scripts/fetch_raw_data.js
 ```
 *   `hasaneyldrm/exercises-dataset`에서 1,324개 원본을 긁어와 이미지/GIF 주소를 절대 경로로 변환한 뒤 `scripts/raw_exercises.json`에 임시 세이브합니다.
 
-### 2) AI 번역 및 마스터 데이터 빌드 (Gemini 연동)
+### 2) AI 번역 및 마스터 데이터 빌드 (Claude 연동)
 ```bash
-node scripts/seed-exercises.js --delay=5000
+node scripts/seed-exercises.js --delay=100
 ```
 *   **옵션**: 
-    *   `--delay=5000` (기본값): 분당 12회 요청 속도로 API Rate Limit(무료 기준 15 RPM)을 방어합니다.
+    *   `--delay=100` (추천): 유료 크레딧을 연동하여 빠르게 돌릴 때 딜레이를 단축해 15분 만에 완성합니다.
     *   `--limit=N`: 디버깅용으로 N개만 번역하고 종료하고 싶을 때 사용합니다.
 *   **Resumable (재개 가능)**: 번역 도중 끊기더라도 다시 실행하면 `scripts/translated_exercises.json`에 이미 기록된 운동들은 자동으로 필터링 및 건너뛰기 처리하여 API 할당량을 보호합니다.
+
+### 3) 가공 완료된 데이터를 Supabase DB에 적재
+```bash
+node scripts/upload-to-supabase.js
+```
+*   **사전 요구사항**: RLS(행 레벨 보안)를 안전하게 우회하여 데이터를 일괄 갱신(Upsert)하기 위해, `.env.local` 파일에 Supabase 관리자 권한 키(`SUPABASE_SERVICE_ROLE_KEY`)를 등록해주어야 작동합니다.
+*   **중복 방지**: `original_name`이 겹치는 경우 기존 데이터를 덮어쓰기(Upsert)하여 중복 삽입 없이 안전하게 여러 번 반복 실행할 수 있습니다.
