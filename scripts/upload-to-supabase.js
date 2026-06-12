@@ -45,11 +45,39 @@ async function uploadToSupabase() {
     process.exit(1);
   }
 
-  // 2. JSON 데이터 로드
+  // 2. JSON 데이터 로드 및 컬럼 정제 (DB에 정의되지 않은 엉뚱한 컬럼 필터링)
   let exercises = [];
   try {
     const rawData = fs.readFileSync(TRANSLATED_FILE_PATH, 'utf-8');
-    exercises = JSON.parse(rawData);
+    const parsedData = JSON.parse(rawData);
+
+    // 실제 PostgreSQL exercises 테이블의 정식 컬럼 리스트
+    const ALLOWED_COLUMNS = [
+      'name', 
+      'original_name', 
+      'target_muscle', 
+      'synergist_muscles', 
+      'equipment_type', 
+      'weight_multiplier', 
+      'is_unilateral', 
+      'posture_guide', 
+      'safety_tips', 
+      'spinal_compression_level', 
+      'shoulder_impingement_risk', 
+      'gif_url', 
+      'image'
+    ];
+
+    exercises = parsedData.map(item => {
+      const cleanItem = {};
+      ALLOWED_COLUMNS.forEach(col => {
+        if (item[col] !== undefined) {
+          cleanItem[col] = item[col];
+        }
+      });
+      return cleanItem;
+    });
+
   } catch (error) {
     console.error('❌ 에러: JSON 파일을 읽거나 파싱하는 데 실패했습니다:', error.message);
     process.exit(1);
