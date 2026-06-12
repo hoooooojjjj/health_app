@@ -22,7 +22,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function Home() {
-  const { pushStatus, subscribe, unsubscribe } = usePush()
+  const { isAuthReady, pushStatus, subscribe, unsubscribe } = usePush()
   const { status: timerStatus, remainingSeconds, durationSec, start, cancel, reset } = useRestTimer()
 
   const [log, setLog] = useState<string[]>([])
@@ -120,12 +120,13 @@ export default function Home() {
                     className={styles.btnPrimary}
                     onClick={handleSubscribe}
                     disabled={
+                      !isAuthReady ||
                       pushStatus === 'requesting' ||
                       pushStatus === 'denied' ||
                       pushStatus === 'unsupported'
                     }
                   >
-                    {pushStatus === 'requesting' ? '요청 중...' : '🔔 알림 구독하기'}
+                    {!isAuthReady ? '초기화 중...' : pushStatus === 'requesting' ? '요청 중...' : '🔔 알림 구독하기'}
                   </button>
                 )}
               </div>

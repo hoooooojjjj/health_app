@@ -10,9 +10,14 @@
 *   **미들웨어 ([`src/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/middleware.ts))**: 모든 API 및 페이지 요청 시 세션 검증.
 *   **세션 갱신 ([`src/utils/supabase/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/middleware.ts))**: 요청마다 Supabase 인증 쿠키를 리프레시하여 사용자를 식별.
 
-### ⚠️ 현재 이슈: 401 Unauthorized 오류
+### ⚠️ 원인: 401 Unauthorized 오류
 백엔드 API 엔드포인트(`start`, `cancel`, `subscribe` 등)는 사용자별 타이머와 구독 정보를 DB에 저장하기 위해 `supabase.auth.getUser()`를 호출합니다.
-현재 서비스에 별도의 회원가입/로그인 화면이 구현되지 않았기 때문에, 브라우저가 유효한 세션 쿠키를 제공하지 못해 API 단에서 **`401 Unauthorized` (인증이 필요합니다)** 에러가 발생하고 있습니다.
+별도의 회원가입/로그인 화면이 없어 유효한 세션 쿠키가 없으면 `401 Unauthorized` 에러가 발생합니다.
+
+### ✅ 해결 완료: 익명 로그인 자동 초기화
+[`src/providers/PushProvider.tsx`](file:///Users/ryuhojun/Documents/project/health_app/src/providers/PushProvider.tsx)의 `useEffect` 마운트 시점에 자동으로 세션을 확인하고, 세션이 없으면 `signInAnonymously()`를 호출합니다.
+인증 완료 전까지는 `isAuthReady: false` 상태를 context로 노출하여 API 호출 버튼을 비활성화합니다.
+
 
 ---
 
