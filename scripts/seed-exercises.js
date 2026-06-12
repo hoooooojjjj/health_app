@@ -28,6 +28,80 @@ const OUTPUT_FILE_PATH = path.join(__dirname, 'translated_exercises.json');
 // 유틸리티: 대기 시간(Delay)
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// 근육군/장비 정규화 데이터 정의
+const VALID_MUSCLES = new Set([
+  'UPPER_CHEST', 'MID_CHEST', 'LOWER_CHEST', 
+  'LATS', 'UPPER_BACK', 'LOWER_BACK', 
+  'FRONT_SHOULDER', 'LATERAL_SHOULDER', 'REAR_SHOULDER', 
+  'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 
+  'BICEPS', 'TRICEPS', 'FOREARMS', 
+  'ABS', 'OBLIQUES',
+  'TRAPEZIUS', 'HIP_FLEXORS', 'WRIST_EXTENSORS', 'WRIST_FLEXORS'
+]);
+
+const MUSCLE_MAP = {
+  'CHEST': 'MID_CHEST',
+  'PECTORALIS_MAJOR': 'MID_CHEST',
+  'PECTORALIS': 'MID_CHEST',
+  'TRAPS': 'TRAPEZIUS',
+  'MIDDLE_BACK': 'UPPER_BACK',
+  'RHOMBOIDS': 'UPPER_BACK',
+  'TERES_MAJOR': 'LATS',
+  'BACK': 'UPPER_BACK',
+  'SHOULDERS': 'LATERAL_SHOULDER',
+  'SHOULDER': 'LATERAL_SHOULDER',
+  'DELTOIDS': 'LATERAL_SHOULDER',
+  'RECTUS_FEMORIS': 'HIP_FLEXORS',
+  'ILIOPSEAS': 'HIP_FLEXORS',
+  'TIBIALIS_ANTERIOR': 'CALVES',
+  'SOLEUS': 'CALVES',
+  'INNER_THIGH': 'QUADS',
+  'ADDUCTORS': 'QUADS',
+  'ABDUCTORS': 'GLUTES',
+  'BRACHIALIS': 'BICEPS',
+  'FOREARM': 'FOREARMS',
+  'CORE': 'ABS',
+  'TRANSVERSE_ABDOMINIS': 'ABS'
+};
+
+function normalizeMuscle(muscle) {
+  if (!muscle) return null;
+  const upper = muscle.toUpperCase().trim();
+  if (VALID_MUSCLES.has(upper)) {
+    return upper;
+  }
+  if (MUSCLE_MAP[upper]) {
+    return MUSCLE_MAP[upper];
+  }
+  return null;
+}
+
+const VALID_EQUIPMENTS = new Set([
+  'DUMBBELL', 'BARBELL', 'MACHINE', 'CABLE', 'BODYWEIGHT', 'ASSISTED', 'BAND', 'ROPE'
+]);
+
+const EQUIPMENT_MAP = {
+  'KETTLEBELL': 'DUMBBELL',
+  'PLATE': 'BARBELL',
+  'MEDICINE_BALL': 'BODYWEIGHT',
+  'FITBALL': 'BODYWEIGHT',
+  'STABILITY_BALL': 'BODYWEIGHT',
+  'SLIDE_BOARD': 'BODYWEIGHT',
+  'WHEEL_ROLLER': 'BODYWEIGHT'
+};
+
+function normalizeEquipment(eq) {
+  if (!eq) return 'BODYWEIGHT';
+  const upper = eq.toUpperCase().trim();
+  if (VALID_EQUIPMENTS.has(upper)) {
+    return upper;
+  }
+  if (EQUIPMENT_MAP[upper]) {
+    return EQUIPMENT_MAP[upper];
+  }
+  return 'BODYWEIGHT';
+}
+
 // CLI 인자 파싱
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -134,7 +208,7 @@ async function main() {
       if (cleanText.startsWith('```')) {
         cleanText = cleanText.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
       }
-      
+
       let parsedItem;
       try {
         parsedItem = JSON.parse(cleanText);
@@ -143,6 +217,20 @@ async function main() {
         // 에러가 나도 스크립트가 죽지 않도록 continue 처리
         continue;
       }
+
+      // JSON 데이터 정규화 적용
+      parsedItem.target_muscle = normalizeMuscle(parsedItem.target_muscle) || 'ABS';
+      
+      const rawSynergists = Array.isArray(parsedItem.synergist_muscles) ? parsedItem.synergist_muscles : [];
+      const cleanSynergists = new Set();
+      rawSynergists.forEach(m => {
+        const norm = normalizeMuscle(m);
+        if (norm && norm !== parsedItem.target_muscle) {
+          cleanSynergists.add(norm);
+        }
+      });
+      parsedItem.synergist_muscles = Array.from(cleanSynergists);
+      parsedItem.equipment_type = normalizeEquipment(parsedItem.equipment_type);
 
       // 번역할 필요가 없는 이미지/GIF 절대 URL은 직접 병합합니다.
       parsedItem.gif_url = exercise.gif_url || '';

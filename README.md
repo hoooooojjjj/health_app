@@ -68,6 +68,7 @@ Day 1,2,3 (1회전: 대근육 & 너비)  ➡️  Day 4,5,6 (2회전: 소근육 �
   - 증량 직후에는 일시적으로 `Clean_Reps`가 줄어 `Total Volume (무게 × 횟수)`이 일시 감소합니다.
   - 앱은 이를 경고가 아닌 **적응기**로 판단하고 사용자에게 격려 메시지를 출력하며, 이전의 최고 볼륨 스코어를 돌파할 때까지 해당 중량을 유지시킵니다.
 
+
 ---
 
 ## 📲 4. 앱의 핵심 기능 요구사항 (UI/UX)
@@ -76,3 +77,14 @@ Day 1,2,3 (1회전: 대근육 & 너비)  ➡️  Day 4,5,6 (2회전: 소근육 �
 2. **세션별 루틴 스위칭**: 매주 1회전/2회전 구성으로 운동 루틴을 자동 분기 로드.
 3. **스마트 타이머**: 소근육(30초~1분)과 대근육(1분 이상) 운동의 휴식 시간을 자동 분리 세팅.
 4. **컨디션 기반 실시간 Re-balancing**: 운동 시작 전 허리/어깨의 통증 레벨을 진단하여 그날의 운동 순서나 랫풀다운 등을 루틴 후반부로 다이내믹 정렬.
+
+---
+
+## 💻 5. 로컬 개발 및 아키텍처 문서
+
+* **로컬 서버 실행**: `npm run dev` (http://localhost:3000)
+* **상세 기능 설계**:
+  * [CLAUDE.md](file:///Users/ryuhojun/Documents/project/health_app/CLAUDE.md): AI 에이전트 개발 규칙서
+  * [docs/rest-timer-push.md](file:///Users/ryuhojun/Documents/project/health_app/docs/rest-timer-push.md): 운동 휴식 타이머 및 백그라운드 푸시 알림 구조
+  * [docs/supabase-auth-rls.md](file:///Users/ryuhojun/Documents/project/health_app/docs/supabase-auth-rls.md): Supabase 인증 및 데이터 보안 RLS 가이드
+

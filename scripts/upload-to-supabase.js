@@ -45,7 +45,80 @@ async function uploadToSupabase() {
     process.exit(1);
   }
 
-  // 2. JSON 데이터 로드 및 컬럼 정제 (DB에 정의되지 않은 엉뚱한 컬럼 필터링)
+  // 2. JSON 데이터 로드 및 컬럼 정제 (DB에 정의되지 않은 엉뚱한 컬럼 필터링 & 근육명 정규화)
+  const VALID_MUSCLES = new Set([
+    'UPPER_CHEST', 'MID_CHEST', 'LOWER_CHEST', 
+    'LATS', 'UPPER_BACK', 'LOWER_BACK', 
+    'FRONT_SHOULDER', 'LATERAL_SHOULDER', 'REAR_SHOULDER', 
+    'QUADS', 'HAMSTRINGS', 'GLUTES', 'CALVES', 
+    'BICEPS', 'TRICEPS', 'FOREARMS', 
+    'ABS', 'OBLIQUES',
+    'TRAPEZIUS', 'HIP_FLEXORS', 'WRIST_EXTENSORS', 'WRIST_FLEXORS'
+  ]);
+
+  const MUSCLE_MAP = {
+    'CHEST': 'MID_CHEST',
+    'PECTORALIS_MAJOR': 'MID_CHEST',
+    'PECTORALIS': 'MID_CHEST',
+    'TRAPS': 'TRAPEZIUS',
+    'MIDDLE_BACK': 'UPPER_BACK',
+    'RHOMBOIDS': 'UPPER_BACK',
+    'TERES_MAJOR': 'LATS',
+    'BACK': 'UPPER_BACK',
+    'SHOULDERS': 'LATERAL_SHOULDER',
+    'SHOULDER': 'LATERAL_SHOULDER',
+    'DELTOIDS': 'LATERAL_SHOULDER',
+    'RECTUS_FEMORIS': 'HIP_FLEXORS',
+    'ILIOPSEAS': 'HIP_FLEXORS',
+    'TIBIALIS_ANTERIOR': 'CALVES',
+    'SOLEUS': 'CALVES',
+    'INNER_THIGH': 'QUADS',
+    'ADDUCTORS': 'QUADS',
+    'ABDUCTORS': 'GLUTES',
+    'BRACHIALIS': 'BICEPS',
+    'FOREARM': 'FOREARMS',
+    'CORE': 'ABS',
+    'TRANSVERSE_ABDOMINIS': 'ABS'
+  };
+
+  function normalizeMuscle(muscle) {
+    if (!muscle) return null;
+    const upper = muscle.toUpperCase().trim();
+    if (VALID_MUSCLES.has(upper)) {
+      return upper;
+    }
+    if (MUSCLE_MAP[upper]) {
+      return MUSCLE_MAP[upper];
+    }
+    return null;
+  }
+
+  const VALID_EQUIPMENTS = new Set([
+    'DUMBBELL', 'BARBELL', 'MACHINE', 'CABLE', 'BODYWEIGHT', 'ASSISTED', 'BAND', 'ROPE'
+  ]);
+
+  const EQUIPMENT_MAP = {
+    'KETTLEBELL': 'DUMBBELL',
+    'PLATE': 'BARBELL',
+    'MEDICINE_BALL': 'BODYWEIGHT',
+    'FITBALL': 'BODYWEIGHT',
+    'STABILITY_BALL': 'BODYWEIGHT',
+    'SLIDE_BOARD': 'BODYWEIGHT',
+    'WHEEL_ROLLER': 'BODYWEIGHT'
+  };
+
+  function normalizeEquipment(eq) {
+    if (!eq) return 'BODYWEIGHT';
+    const upper = eq.toUpperCase().trim();
+    if (VALID_EQUIPMENTS.has(upper)) {
+      return upper;
+    }
+    if (EQUIPMENT_MAP[upper]) {
+      return EQUIPMENT_MAP[upper];
+    }
+    return 'BODYWEIGHT';
+  }
+
   let exercises = [];
   try {
     const rawData = fs.readFileSync(TRANSLATED_FILE_PATH, 'utf-8');
@@ -72,11 +145,44 @@ async function uploadToSupabase() {
       const cleanItem = {};
       ALLOWED_COLUMNS.forEach(col => {
         if (item[col] !== undefined) {
-          cleanItem[col] = item[col];
+          if (col === 'target_muscle') {
+            cleanItem[col] = normalizeMuscle(item[col]) || 'ABS'; // 기본값으로 ABS 지정 (에러방지)
+          } else if (col === 'synergist_muscles') {
+            const rawSynergists = Array.isArray(item[col]) ? item[col] : [];
+            const cleanSynergists = new Set();
+            rawSynergists.forEach(m => {
+              const norm = normalizeMuscle(m);
+              if (norm && norm !== cleanItem['target_muscle']) { // 주동근과 겹치지 않는 협응근만 추가
+                cleanSynergists.add(norm);
+              }
+            });
+            cleanItem[col] = Array.from(cleanSynergists);
+          } else if (col === 'equipment_type') {
+            cleanItem[col] = normalizeEquipment(item[col]);
+          } else {
+            cleanItem[col] = item[col];
+          }
         }
       });
       return cleanItem;
     });
+
+    // 중복 제거 (original_name 기준)
+    const seenNames = new Set();
+    const uniqueExercises = [];
+    let dupCount = 0;
+    exercises.forEach(item => {
+      if (!seenNames.has(item.original_name)) {
+        seenNames.add(item.original_name);
+        uniqueExercises.push(item);
+      } else {
+        dupCount++;
+      }
+    });
+    if (dupCount > 0) {
+      console.log(`⚠️ 중복된 original_name ${dupCount}개 발견. 최초 1개씩만 적재 대상에 포함합니다.`);
+    }
+    exercises = uniqueExercises;
 
   } catch (error) {
     console.error('❌ 에러: JSON 파일을 읽거나 파싱하는 데 실패했습니다:', error.message);
