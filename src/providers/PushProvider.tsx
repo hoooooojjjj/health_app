@@ -57,7 +57,8 @@ export function PushProvider({ children }: { children: React.ReactNode }) {
         // 세션이 없으면 자동 익명 로그인 시도
         const { error } = await supabase.auth.signInAnonymously()
         if (error) {
-          console.error('[Auth] 익명 로그인 실패:', error.message)
+          // 로그인 실패해도 UI를 멈추지 않음 (경고만 출력)
+          console.warn('[Auth] 익명 로그인 실패 (API 호출 시 401 발생할 수 있음):', error.message)
         } else {
           console.log('[Auth] 익명 로그인 완료')
         }

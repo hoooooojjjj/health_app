@@ -85,13 +85,30 @@ export async function POST(request: NextRequest) {
     }
 
     // 배포 URL 결정 (Vercel 환경 또는 로컬)
+    const isLocal = !process.env.VERCEL_URL
     const appUrl =
       process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
         : process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
-    // QStash에 지연 메시지 예약
-    const qstash = new Client({ token: process.env.QSTASH_TOKEN! })
+    // 로컬 개발 환경에서는 QStash 건너뜀
+    // (QStash는 localhost 콜백 URL을 허용하지 않음 — Vercel 배포 후 정상 동작)
+    if (isLocal) {
+      console.log(`[Timer] 로컬 모드: QStash 건너눠 (id: ${timer.id}, ${durationSec}초)`)
+      return Response.json({
+        timerId: timer.id,
+        fireAt,
+        durationSec,
+        localMode: true,
+      })
+    }
+
+    // QStash에 지연 메시지 예약 (QSTASH_URL로 리전 명시하여 geo-routing 오류 방지)
+    const qstash = new Client({
+      token: process.env.QSTASH_TOKEN!,
+      baseUrl: process.env.QSTASH_URL ?? 'https://qstash.upstash.io',
+    })
+
     const qstashRes = await qstash.publishJSON({
       url: `${appUrl}/api/push/fire`,
       delay: durationSec,
