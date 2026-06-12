@@ -84,12 +84,12 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '타이머 생성 실패' }, { status: 500 })
     }
 
-    // 배포 URL 결정 (Vercel 환경 또는 로컬)
-    const isLocal = !process.env.VERCEL_URL
-    const appUrl =
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    // 배포 URL 결정 (Host 헤더 기반으로 정확한 요청 도메인 추적)
+    const host = request.headers.get('host')
+    const protocol = host?.includes('localhost') ? 'http' : 'https'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000')
+
+    const isLocal = appUrl.includes('localhost')
 
     // 로컬 개발 환경에서는 QStash 건너뜀
     // (QStash는 localhost 콜백 URL을 허용하지 않음 — Vercel 배포 후 정상 동작)
