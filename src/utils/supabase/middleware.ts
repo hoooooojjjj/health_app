@@ -27,10 +27,6 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Do not run any code between createServerClient and getUser.
-  // getUser() makes an API call to Supabase to verify/refresh the session token.
-  const { data: { user } } = await supabase.auth.getUser()
-
   const url = request.nextUrl.clone()
   const isLoginPage = url.pathname === '/login'
   const isApiPushFire = url.pathname === '/api/push/fire'
@@ -50,6 +46,10 @@ export async function updateSession(request: NextRequest) {
   if (isApiPushFire) {
     return supabaseResponse
   }
+
+  // IMPORTANT: Do not run any code between createServerClient and getUser.
+  // getUser() makes an API call to Supabase to verify/refresh the session token.
+  const { data: { user } } = await supabase.auth.getUser()
 
   // 3. API 경로 보호 (/api/push/subscribe, /api/timer/start 등)
   if (url.pathname.startsWith('/api/')) {

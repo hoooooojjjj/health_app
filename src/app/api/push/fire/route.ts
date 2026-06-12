@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { Receiver } from '@upstash/qstash'
 import webpush from 'web-push'
 import type { NextRequest } from 'next/server'
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     // service role key가 없으면 anon key로 폴백 (RLS 없이 조회 필요)
     // fire 엔드포인트는 인증 없이 QStash가 직접 호출하므로 서비스 클라이언트 사용
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // ② DB에서 타이머 상태 확인
     const { data: timer, error: fetchError } = await supabase
