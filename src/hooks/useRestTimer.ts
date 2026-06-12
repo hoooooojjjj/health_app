@@ -63,17 +63,20 @@ export function useRestTimer(): UseRestTimerReturn {
         setRemainingSeconds(seconds)
         setStatus('running')
 
+        const endTime = Date.now() + seconds * 1000
+
         intervalRef.current = setInterval(() => {
-          setRemainingSeconds((prev) => {
-            if (prev <= 1) {
-              clearInterval(intervalRef.current!)
-              intervalRef.current = null
-              setStatus('done')
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
+          const remain = Math.ceil((endTime - Date.now()) / 1000)
+          
+          if (remain <= 0) {
+            clearInterval(intervalRef.current!)
+            intervalRef.current = null
+            setStatus('done')
+            setRemainingSeconds(0)
+          } else {
+            setRemainingSeconds(remain)
+          }
+        }, 500)
 
         return {}
       } catch (err) {
