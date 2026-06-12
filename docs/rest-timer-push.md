@@ -121,8 +121,8 @@ sequenceDiagram
 1. **[QStash]** 지정된 지연 시간이 지나면 `/api/push/fire` 엔드포인트를 HTTP POST로 자동 호출.
 2. **[Next.js API]** `/api/push/fire` 수신:
    - **QStash 서명 검증** (`Upstash-Signature` 헤더 검사로 악성 호출 차단).
-   - DB에서 `timerId`에 매핑된 타이머 상태 확인.
-   - `status === 'active'`이면 `web-push`를 사용하여 구독 단말에 푸시 알림 전송 후, 상태를 `completed`로 전환.
+   - **RLS 우회 (Bypass RLS)**: QStash 콜백은 세션 쿠키가 없는 외부 비인증 요청입니다. 따라서 일반 `createClient` 대신 `createAdminClient()`(`SUPABASE_SERVICE_ROLE_KEY` 사용)를 통해 `rest_timers` 테이블의 타이머 상태를 안전하게 조회합니다.
+   - DB에서 `status === 'active'`이면 `web-push`를 사용하여 구독 단말에 푸시 알림 전송 후, 상태를 `completed`로 전환.
    - `status !== 'active'`(예: 취소됨)이면 스킵하고 200 응답만 반환 (멱등성 보장).
 
 ### 3) 타이머 취소 흐름 (건너뛰기)
@@ -148,11 +148,13 @@ sequenceDiagram
 
 ## 📁 관련 파일 목록
 
+*   **[`src/utils/supabase/server.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/server.ts)**: 일반 쿠키 기반 클라이언트(`createClient`) 및 백그라운드 작업용 RLS 우회 관리자 클라이언트(`createAdminClient`) 생성을 담당하는 헬퍼.
+*   **[`src/utils/supabase/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/middleware.ts)**: 요청 경로별 세션 제어 및 페이지 보호 미들웨어. `/api/push/fire` 및 서비스 워커 에셋은 DB 조회 전에 조기 허용하도록 최적화되어 있습니다.
 *   **[`src/providers/PushProvider.tsx`](file:///Users/ryuhojun/Documents/project/health_app/src/providers/PushProvider.tsx)**: 앱 전역 푸시 알림 구독 상태 관리 Context.
 *   **[`src/hooks/useRestTimer.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/hooks/useRestTimer.ts)**: 클라이언트 측 카운트다운 타이머 및 시작/취소 API 래핑 훅.
 *   **[`src/app/api/timer/start/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/start/route.ts)**: 타이머 생성 및 QStash 예약.
 *   **[`src/app/api/timer/cancel/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/cancel/route.ts)**: 타이머 DB 상태를 `cancelled`로 변경.
-*   **[`src/app/api/push/fire/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/fire/route.ts)**: QStash 콜백 수신 및 실제 푸시 발송 처리.
+*   **[`src/app/api/push/fire/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/fire/route.ts)**: QStash 콜백 수신 및 실제 푸시 발송 처리 (`createAdminClient` 사용).
 *   **[`src/app/api/push/subscribe/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/subscribe/route.ts)**: 푸시 구독 정보를 Supabase에 UPSERT/DELETE.
 *   **[`public/sw.js`](file:///Users/ryuhojun/Documents/project/health_app/public/sw.js)**: Service Worker 내 푸시 수신(`push`) 및 알림 표시(`notificationclick`) 이벤트 제어.
 
