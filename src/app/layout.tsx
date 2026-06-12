@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PushProvider } from '@/providers/PushProvider';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,7 +44,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body>
-        {children}
+        <PushProvider>
+          {children}
+        </PushProvider>
         {/* Service Worker 등록 */}
         <script
           dangerouslySetInnerHTML={{

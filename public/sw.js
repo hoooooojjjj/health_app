@@ -16,11 +16,12 @@ self.addEventListener('push', (event) => {
   const data = event.data.json()
 
   const options = {
-    body: data.body || '알림이 도착했습니다.',
+    body: data.body || '휴식 시간이 종료되었습니다.',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     vibrate: [200, 100, 200, 100, 200],
-    tag: data.tag || 'health-app-notification',
+    // 같은 tag로 중복 알림 방지 (최신 알림이 기존 알림을 덮어씀)
+    tag: data.tag || 'rest-timer',
     renotify: true,
     data: {
       url: data.url || '/',
@@ -28,7 +29,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Health App', options)
+    self.registration.showNotification(data.title || '🏋️ 휴식 완료!', options)
   )
 })
 

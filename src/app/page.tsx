@@ -1,145 +1,87 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { usePush } from '@/providers/PushProvider'
+import { useRestTimer } from '@/hooks/useRestTimer'
 import styles from './page.module.css'
 
-type PushStatus = 'idle' | 'requesting' | 'subscribed' | 'denied' | 'unsupported'
-type TimerStatus = 'idle' | 'running' | 'done'
+// 휴식 시간 프리셋 (초)
+const PRESETS = [
+  { label: '30초', value: 30 },
+  { label: '1분', value: 60 },
+  { label: '2분', value: 120 },
+  { label: '3분', value: 180 },
+  { label: '5분', value: 300 },
+]
 
-// VAPID 공개키를 Uint8Array로 변환
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = atob(base64)
-  const arr = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i)
-  return arr.buffer
+// MM:SS 포맷
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 export default function Home() {
-  const [pushStatus, setPushStatus] = useState<PushStatus>('idle')
-  const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle')
-  const [countdown, setCountdown] = useState(10)
-  const [subscription, setSubscription] = useState<PushSubscription | null>(null)
+  const { pushStatus, subscribe, unsubscribe } = usePush()
+  const { status: timerStatus, remainingSeconds, durationSec, start, cancel, reset } = useRestTimer()
+
   const [log, setLog] = useState<string[]>([])
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [selectedPreset, setSelectedPreset] = useState<number>(60)
 
   const addLog = useCallback((msg: string) => {
     setLog((prev) => [`[${new Date().toLocaleTimeString('ko-KR')}] ${msg}`, ...prev.slice(0, 9)])
   }, [])
 
-  // 알림 권한 요청 + 서비스 워커 구독
-  const subscribePush = useCallback(async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setPushStatus('unsupported')
-      addLog('❌ 이 브라우저는 푸시 알림을 지원하지 않습니다')
-      return
-    }
-
-    setPushStatus('requesting')
+  // ── 구독 ──
+  const handleSubscribe = useCallback(async () => {
     addLog('🔔 알림 권한 요청 중...')
+    await subscribe()
+    addLog(
+      pushStatus === 'denied'
+        ? '❌ 알림 권한이 거부되었습니다'
+        : '✅ 알림 구독 완료!'
+    )
+  }, [subscribe, pushStatus, addLog])
 
-    try {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        setPushStatus('denied')
-        addLog('❌ 알림 권한이 거부되었습니다')
-        return
-      }
+  const handleUnsubscribe = useCallback(async () => {
+    await unsubscribe()
+    addLog('🔕 알림 구독 취소됨')
+  }, [unsubscribe, addLog])
 
-      const reg = await navigator.serviceWorker.ready
-      addLog('✅ 서비스 워커 준비됨')
-
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-        ),
-      })
-
-      // 서버에 구독 정보 저장
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub.toJSON()),
-      })
-
-      if (!res.ok) throw new Error('서버 구독 저장 실패')
-
-      setSubscription(sub)
-      setPushStatus('subscribed')
-      addLog('✅ 푸시 알림 구독 완료!')
-    } catch (err) {
-      setPushStatus('idle')
-      addLog(`❌ 구독 실패: ${err instanceof Error ? err.message : '알 수 없는 오류'}`)
-    }
-  }, [addLog])
-
-  // 구독 취소
-  const unsubscribe = useCallback(async () => {
-    if (subscription) {
-      await subscription.unsubscribe()
-      await fetch('/api/push/subscribe', { method: 'DELETE' })
-      setSubscription(null)
-      setPushStatus('idle')
-      addLog('🔕 알림 구독 취소됨')
-    }
-  }, [subscription, addLog])
-
-  // 10초 타이머 시작
-  const startTimer = useCallback(async () => {
-    if (!subscription) {
+  // ── 타이머 시작 ──
+  const handleStart = useCallback(async () => {
+    if (pushStatus !== 'subscribed') {
       addLog('⚠️ 먼저 알림을 구독해주세요')
       return
     }
-
-    setTimerStatus('running')
-    setCountdown(10)
-    addLog('⏱️ 10초 타이머 시작! (앱 닫아도 됩니다)')
-
-    // ① 서버로 "10초 뒤에 알림 보내줘" 요청 (서버가 카운트)
-    fetch('/api/push/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subscription: subscription.toJSON(),
-        delaySeconds: 10,
-        title: '🏋️ Health App',
-        body: '10초 타이머가 완료되었습니다!',
-        url: '/',
-      }),
-    }).then(async (res) => {
-      if (res.ok) addLog('🔔 서버에서 알림 발송 완료!')
-      else addLog('❌ 서버 알림 발송 실패')
-    }).catch(() => addLog('❌ 서버 연결 오류'))
-
-    // ② 클라이언트 카운트다운 (화면 표시용)
-    intervalRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current!)
-          setTimerStatus('done')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-  }, [subscription, addLog])
-
-  // 타이머 리셋
-  const resetTimer = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setTimerStatus('idle')
-    setCountdown(10)
-    addLog('↩️ 타이머 리셋')
-  }, [addLog])
-
-  // 컴포넌트 언마운트 시 정리
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+    addLog(`⏱️ ${selectedPreset}초 타이머 시작! (앱 닫아도 됩니다)`)
+    const { error } = await start(selectedPreset)
+    if (error) {
+      addLog(`❌ ${error}`)
+    } else {
+      addLog('✅ 서버에 타이머 예약 완료 (QStash)')
     }
-  }, [])
+  }, [pushStatus, selectedPreset, start, addLog])
+
+  // ── 타이머 취소 ──
+  const handleCancel = useCallback(async () => {
+    await cancel()
+    addLog('↩️ 타이머 취소됨')
+  }, [cancel, addLog])
+
+  // ── 타이머 리셋 ──
+  const handleReset = useCallback(() => {
+    reset()
+    addLog('↩️ 타이머 리셋')
+  }, [reset, addLog])
+
+  // 카운트다운 표시값
+  const displayTime =
+    timerStatus === 'done'
+      ? '✓'
+      : timerStatus === 'idle'
+      ? formatTime(selectedPreset)
+      : formatTime(remainingSeconds)
 
   return (
     <div className={styles.wrapper}>
@@ -149,13 +91,13 @@ export default function Home() {
 
         {/* Header */}
         <header className={styles.header}>
-          <span className={styles.labelSystem}>// health_app / pwa_test</span>
-          <h1 className={styles.pageTitle}>알림 테스트</h1>
+          <span className={styles.labelSystem}>// health_app / rest_timer_test</span>
+          <h1 className={styles.pageTitle}>휴식 타이머</h1>
         </header>
 
         <main className={styles.main}>
 
-          {/* Step 1: 구독 */}
+          {/* STEP 1: 구독 */}
           <section className={styles.section}>
             <span className={styles.label}>STEP 1 — 알림 구독</span>
             <div className={styles.card}>
@@ -165,19 +107,23 @@ export default function Home() {
                   : pushStatus === 'denied'
                   ? '❌ 알림 권한이 거부되었습니다. 설정에서 허용해주세요.'
                   : pushStatus === 'unsupported'
-                  ? '❌ 이 브라우저는 PWA 푸시를 지원하지 않습니다. Safari(iOS 16.4+)를 사용해주세요.'
+                  ? '❌ 이 브라우저는 PWA 푸시를 지원하지 않습니다. Safari(iOS 16.4+) + 홈 화면 추가 후 사용해주세요.'
                   : 'PWA 백그라운드 푸시 알림을 활성화합니다.'}
               </p>
               <div className={styles.buttonRow}>
                 {pushStatus === 'subscribed' ? (
-                  <button className={styles.btnDanger} onClick={unsubscribe}>
+                  <button className={styles.btnDanger} onClick={handleUnsubscribe}>
                     구독 취소
                   </button>
                 ) : (
                   <button
                     className={styles.btnPrimary}
-                    onClick={subscribePush}
-                    disabled={pushStatus === 'requesting' || pushStatus === 'denied' || pushStatus === 'unsupported'}
+                    onClick={handleSubscribe}
+                    disabled={
+                      pushStatus === 'requesting' ||
+                      pushStatus === 'denied' ||
+                      pushStatus === 'unsupported'
+                    }
                   >
                     {pushStatus === 'requesting' ? '요청 중...' : '🔔 알림 구독하기'}
                   </button>
@@ -186,41 +132,80 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Step 2: 타이머 */}
+          {/* STEP 2: 프리셋 선택 */}
           <section className={styles.section}>
-            <span className={styles.label}>STEP 2 — 10초 백그라운드 타이머</span>
+            <span className={styles.label}>STEP 2 — 휴식 시간 선택</span>
+            <div className={styles.card}>
+              <div className={styles.buttonRow}>
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.value}
+                    className={
+                      selectedPreset === p.value && timerStatus === 'idle'
+                        ? styles.btnPrimary
+                        : styles.btnGhost
+                    }
+                    onClick={() => {
+                      if (timerStatus === 'idle') setSelectedPreset(p.value)
+                    }}
+                    disabled={timerStatus !== 'idle'}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* STEP 3: 타이머 */}
+          <section className={styles.section}>
+            <span className={styles.label}>STEP 3 — 백그라운드 타이머</span>
             <div className={styles.card}>
               {/* 카운트다운 디스플레이 */}
               <div className={styles.timerDisplay}>
-                <div className={`${styles.timerNum} ${timerStatus === 'done' ? styles.timerDone : timerStatus === 'running' ? styles.timerRunning : ''}`}>
-                  {timerStatus === 'done' ? '✓' : String(countdown).padStart(2, '0')}
+                <div
+                  className={`${styles.timerNum} ${
+                    timerStatus === 'done'
+                      ? styles.timerDone
+                      : timerStatus === 'running'
+                      ? styles.timerRunning
+                      : ''
+                  }`}
+                >
+                  {displayTime}
                 </div>
                 <div className={styles.timerLabel}>
                   {timerStatus === 'idle' && '대기 중'}
-                  {timerStatus === 'running' && '타이머 실행 중...'}
-                  {timerStatus === 'done' && '완료!'}
+                  {timerStatus === 'running' && `타이머 실행 중... (총 ${durationSec}초)`}
+                  {timerStatus === 'done' && '완료! 알림이 발송되었습니다 🎉'}
                 </div>
               </div>
 
               <p className={styles.cardDesc}>
                 {timerStatus === 'idle'
-                  ? '시작 후 앱을 백그라운드로 내리거나 화면을 꺼도 서버에서 10초 뒤 알림을 보냅니다.'
+                  ? '시작 후 앱을 닫거나 화면을 꺼도 서버(QStash)가 지정 시간에 알림을 보냅니다.'
                   : timerStatus === 'running'
-                  ? '지금 앱을 닫거나 화면을 꺼도 알림이 옵니다! 서버가 카운트 중입니다.'
+                  ? '지금 앱을 닫아도 알림이 옵니다! 서버가 카운트 중입니다.'
                   : '알림이 발송되었습니다! 화면 밖에서도 알림이 왔나요? 🎉'}
               </p>
 
               <div className={styles.buttonRow}>
                 {timerStatus === 'idle' ? (
                   <button
-                    className={`${styles.btnPrimary} ${!subscription ? styles.btnDisabled : ''}`}
-                    onClick={startTimer}
-                    disabled={!subscription}
+                    className={`${styles.btnPrimary} ${
+                      pushStatus !== 'subscribed' ? styles.btnDisabled : ''
+                    }`}
+                    onClick={handleStart}
+                    disabled={pushStatus !== 'subscribed'}
                   >
-                    ⏱️ 10초 타이머 시작
+                    ⏱️ 타이머 시작
+                  </button>
+                ) : timerStatus === 'running' ? (
+                  <button className={styles.btnDanger} onClick={handleCancel}>
+                    ✕ 취소 (건너뛰기)
                   </button>
                 ) : (
-                  <button className={styles.btnGhost} onClick={resetTimer}>
+                  <button className={styles.btnGhost} onClick={handleReset}>
                     ↩️ 리셋
                   </button>
                 )}

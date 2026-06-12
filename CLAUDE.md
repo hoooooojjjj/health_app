@@ -41,15 +41,44 @@
   * `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Web Push용 VAPID 공개 키)
   * `VAPID_PRIVATE_KEY` (Web Push용 VAPID 비공개 키)
   * `VAPID_MAILTO` (Web Push용 이메일 주소, 예: `mailto:rhj080471@gmail.com`)
+  * `QSTASH_TOKEN` (Upstash QStash API 토큰)
+  * `QSTASH_CURRENT_SIGNING_KEY` (QStash 서명 검증 키)
+  * `QSTASH_NEXT_SIGNING_KEY` (QStash 서명 검증 키, 롤링 교체용)
 
-### 4) Web Push Notifications (PWA)
-* **iOS PWA Support**: iOS 환경(iOS 16.4+)에서 백그라운드 푸시 알림을 수신하기 위해서는 반드시 Safari 브라우저에서 **"홈 화면에 추가(Add to Home Screen)"**를 통해 독립된 Standalone 웹앱 형태로 실행해야 합니다. 일반 브라우저 탭 상태에서는 푸시 알림 등록 및 수신이 제한됩니다.
-* **Service Worker & PWA Config**:
-  * [public/sw.js](file:///Users/ryuhojun/Documents/project/health_app/public/sw.js): 백그라운드 푸시 이벤트(`push`)를 수신하여 기기에 알림을 노출하고, 알림 클릭(`notificationclick`) 시 기존에 열린 웹앱 창을 포커싱하거나 새로운 창을 띄웁니다.
-  * [public/manifest.json](file:///Users/ryuhojun/Documents/project/health_app/public/manifest.json): 모바일 환경에서 이 웹 애플리케이션을 단독 앱(PWA) 스타일로 인식하도록 아이콘, 테마 색상, 실행 모드(`standalone`) 등을 선언합니다.
-* **Push Notification APIs**:
-  * [src/app/api/push/subscribe/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/subscribe/route.ts): 브라우저(서비스 워커)에서 발급받은 알림 구독 객체(PushSubscription)를 수신하여 메모리 또는 데이터베이스에 저장/갱신/삭제합니다.
-  * [src/app/api/push/send/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/send/route.ts): 저장된 구독 객체로 웹 푸시 알림을 발송합니다. 타이머 지연 발송(`delaySeconds`) 기능을 제공하며, 서버리스 함수 실행 제한 시간을 위해 `maxDuration = 60`(초)이 설정되어 있습니다.
+### 4) 휴식 타이머 알림 아키텍처 (Supabase DB + Upstash QStash + Web Push)
+
+운동 세트 완료 후 휴식 시간(최대 5분)이 경과하면 앱이 백그라운드에 있어도 PWA 푸시 알림을 수신할 수 있도록 구현된 시스템입니다.
+
+#### 데이터베이스 (Supabase)
+* **`push_subscriptions` 테이블**: 유저의 PWA 푸시 구독 정보(`endpoint`, `keys_p256dh`, `keys_auth`)를 영구 저장합니다. RLS 정책으로 본인 구독만 접근 가능합니다.
+* **`rest_timers` 테이블**: 타이머 상태(`active` / `cancelled` / `completed`), 발송 예정 시각(`fire_at`), QStash 메시지 ID(`qstash_msg_id`)를 저장합니다. QStash 콜백 시 이 테이블을 조회하여 발송 여부를 결정합니다.
+
+#### 동작 흐름
+1. **[클라이언트]** `useRestTimer.start(durationSec)` 호출
+2. **[Next.js]** `POST /api/timer/start`: DB에 `active` 레코드 생성 → QStash에 `durationSec`초 후 `/api/push/fire` 호출 예약
+3. **[QStash]** N초 대기 후 `/api/push/fire` HTTP 호출
+4. **[Next.js]** `POST /api/push/fire`: QStash 서명 검증 → DB 상태 확인 → `active`이면 `web-push` 발송, `cancelled`이면 스킵
+5. **[Service Worker]** 푸시 수신 → 기기 알림 표시
+
+#### 타이머 취소 흐름 (건너뛰기)
+* **[클라이언트]** `useRestTimer.cancel()` → `POST /api/timer/cancel`: DB `status` → `cancelled`
+* QStash가 나중에 콜백해도 DB가 `cancelled`이므로 알림 발송 없이 자동 스킵 (QStash 직접 삭제 불필요)
+
+#### 관련 파일
+* [src/providers/PushProvider.tsx](file:///Users/ryuhojun/Documents/project/health_app/src/providers/PushProvider.tsx): 앱 전역 푸시 알림 구독 상태 관리 Context. `layout.tsx`에서 전체를 감쌉니다.
+* [src/hooks/useRestTimer.ts](file:///Users/ryuhojun/Documents/project/health_app/src/hooks/useRestTimer.ts): 휴식 타이머 라이프사이클 관리 훅 (시작 / 취소 / 리셋 + 클라이언트 카운트다운).
+* [src/app/api/timer/start/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/start/route.ts): 타이머 DB 레코드 생성 및 QStash 지연 메시지 예약.
+* [src/app/api/timer/cancel/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/cancel/route.ts): 타이머 DB 상태를 `cancelled`로 변경.
+* [src/app/api/push/fire/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/fire/route.ts): QStash 콜백 수신, 서명 검증, DB 상태 기반 알림 발송.
+* [src/app/api/push/subscribe/route.ts](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/push/subscribe/route.ts): 구독 정보를 Supabase DB에 UPSERT/DELETE.
+* [public/sw.js](file:///Users/ryuhojun/Documents/project/health_app/public/sw.js): 푸시 이벤트 수신 및 알림 표시 (Service Worker).
+* [public/manifest.json](file:///Users/ryuhojun/Documents/project/health_app/public/manifest.json): PWA 설정 (아이콘, standalone 모드 등).
+
+#### iOS 실기기 사용 방법
+1. Vercel 배포 URL을 **Safari**로 접속
+2. 공유 버튼 → **"홈 화면에 추가"** 실행
+3. 홈 화면 아이콘으로 앱 실행 → 알림 권한 **허용**
+4. 이후에는 앱을 완전히 닫아도 백그라운드 알림 수신 가능
 
 ---
 
