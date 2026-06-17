@@ -63,6 +63,33 @@
   align-items: center;
 }
 
+.headerButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btnTestHarness {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-2xs);
+  color: var(--accent-green-light);
+  border: 1px solid var(--accent-green-border);
+  padding: 4px 8px;
+  background-color: var(--accent-green-dim);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  letter-spacing: var(--tracking-wider);
+}
+
+.btnTestHarness:hover {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-color: var(--accent-green-border-hover);
+  box-shadow: var(--glow-green);
+}
+
 .btnLogout {
   font-size: var(--fs-2xs);
   color: var(--text-tertiary);

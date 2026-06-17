@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { usePush } from '@/providers/PushProvider'
 import { useRestTimer } from '@/hooks/useRestTimer'
@@ -55,8 +56,8 @@ export default function Home() {
     await subscribe()
     addLog(
       pushStatus === 'denied'
-        ? '❌ 알림 권한이 거부되었습니다'
-        : '✅ 알림 구독 완료!'
+         ? '❌ 알림 권한이 거부되었습니다'
+         : '✅ 알림 구독 완료!'
     )
   }, [subscribe, pushStatus, addLog])
 
@@ -110,9 +111,14 @@ export default function Home() {
         <header className={styles.header}>
           <div className={styles.headerTop}>
             <span className={styles.labelSystem}>{'// health_app / rest_timer_test'}</span>
-            <button className={styles.btnLogout} onClick={handleLogout}>
-              LOGOUT
-            </button>
+            <div className={styles.headerButtons}>
+              <Link href="/test-harness" className={styles.btnTestHarness}>
+                TEST HARNESS
+              </Link>
+              <button className={styles.btnLogout} onClick={handleLogout}>
+                LOGOUT
+              </button>
+            </div>
           </div>
           <h1 className={styles.pageTitle}>휴식 타이머</h1>
         </header>
