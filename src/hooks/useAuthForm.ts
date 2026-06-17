@@ -57,9 +57,9 @@ export function useAuthForm() {
           router.push('/')
           router.refresh()
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[Auth Error]:', err)
-        setError(err.message || '인증 중 오류가 발생했습니다.')
+        setError((err as Error).message || '인증 중 오류가 발생했습니다.')
       } finally {
         setLoading(false)
       }

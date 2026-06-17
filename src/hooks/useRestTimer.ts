@@ -15,6 +15,8 @@ export interface UseRestTimerReturn {
   start: (durationSec: number) => Promise<{ error?: string }>
   cancel: () => Promise<void>
   reset: () => void
+  adjustTime: (seconds: number) => void
+  skip: () => void
 }
 
 // ---- 훅 ----
@@ -139,6 +141,30 @@ export function useRestTimer(): UseRestTimerReturn {
     setDurationSec(0)
   }, [clearCountdown])
 
+  // ── 시간 조절 (+30초, -10초) ─────────────────────────────────
+  const adjustTime = useCallback((seconds: number) => {
+    if (status !== 'running' || !endTimeRef.current) return
+    
+    endTimeRef.current += seconds * 1000
+    
+    const remain = Math.ceil((endTimeRef.current - Date.now()) / 1000)
+    if (remain <= 0) {
+      clearCountdown()
+      setStatus('done')
+      setRemainingSeconds(0)
+    } else {
+      setRemainingSeconds(remain)
+    }
+  }, [status, clearCountdown])
+
+  // ── 즉시 스킵 ────────────────────────────────────────────────
+  const skip = useCallback(() => {
+    if (status !== 'running') return
+    clearCountdown()
+    setStatus('done')
+    setRemainingSeconds(0)
+  }, [status, clearCountdown])
+
   // 언마운트 시 정리
   useEffect(() => {
     return () => clearCountdown()
@@ -151,5 +177,7 @@ export function useRestTimer(): UseRestTimerReturn {
     start,
     cancel,
     reset,
+    adjustTime,
+    skip
   }
 }

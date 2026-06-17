@@ -109,7 +109,7 @@ export default function Home() {
         {/* Header */}
         <header className={styles.header}>
           <div className={styles.headerTop}>
-            <span className={styles.labelSystem}>// health_app / rest_timer_test</span>
+            <span className={styles.labelSystem}>{'// health_app / rest_timer_test'}</span>
             <button className={styles.btnLogout} onClick={handleLogout}>
               LOGOUT
             </button>
@@ -240,7 +240,7 @@ export default function Home() {
             <span className={styles.label}>LOG</span>
             <div className={`${styles.card} ${styles.logCard}`}>
               {log.length === 0 ? (
-                <p className={styles.logEmpty}>// 로그 없음</p>
+                <p className={styles.logEmpty}>{'// 로그 없음'}</p>
               ) : (
                 log.map((entry, i) => (
                   <p key={i} className={styles.logEntry}>{entry}</p>

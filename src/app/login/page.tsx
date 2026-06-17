@@ -24,7 +24,7 @@ export default function LoginPage() {
         <div className={styles.bgScanlines} />
 
         <header className={styles.header}>
-          <span className={styles.labelSystem}>// health_app / auth_system</span>
+          <span className={styles.labelSystem}>{'// health_app / auth_system'}</span>
           <h1 className={styles.pageTitle}>
             {mode === 'login' ? '로그인' : '회원가입'}
           </h1>

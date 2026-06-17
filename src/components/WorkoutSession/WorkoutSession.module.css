@@ -1,0 +1,113 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: #121212;
+  color: #fff;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  transition: opacity 0.2s ease;
+}
+
+.rowCompleted {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.setIndex {
+  text-align: center;
+  font-weight: 500;
+  color: #888;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: #aaa;
+  text-align: center;
+}
+
+.input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background-color: #2a2a2a;
+  color: #fff;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #555;
+}
+
+.input::placeholder {
+  color: #666;
+}
+
+.cleanRepsInput {
+  color: #a3e635; /* 라임색 */
+}
+
+.dirtyRepsInput {
+  color: #f87171; /* 붉은색 */
+}
+
+.checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #a3e635;
+  pointer-events: auto; /* Allow checking/unchecking even if rowCompleted */
+}
+
+.rowCompleted .checkbox {
+  pointer-events: auto; /* Override none from rowCompleted so they can uncheck */
+}
+
+.addButton {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #2a2a2a;
+  color: #fff;
+  border: 1px dashed #555;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.addButton:hover {
+  background-color: #333;
+}
