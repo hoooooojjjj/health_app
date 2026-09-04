@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import webpush from 'web-push'
 import type { NextRequest } from 'next/server'
 

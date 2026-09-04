@@ -7,8 +7,8 @@
 ## 🔑 Supabase 인증 구조
 
 이 프로젝트는 쿠키 기반 세션 유지 방식(Cookie-based Sessions)을 활용하여 사용자를 식별하고 권한을 통과시킵니다.
-*   **미들웨어 ([`src/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/middleware.ts))**: 모든 API 및 페이지 요청 시 세션을 검증합니다.
-*   **세션 갱신 및 리다이렉트 ([`src/utils/supabase/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/middleware.ts))**:
+*   **Proxy (`src/proxy.ts`)**: 모든 API 및 페이지 요청 시 세션을 검증합니다.
+*   **세션 갱신 및 리다이렉트 (`src/lib/supabase/session.ts`)**:
     *   요청마다 Supabase 인증 쿠키를 리프레시하여 최신 사용자 세션을 확보합니다.
     *   **비로그인 사용자**: 보호된 경로(예: 홈 `/`)에 접근 시 `/login` 페이지로 강제 리다이렉트합니다.
     *   **로그인 사용자**: 이미 로그인된 상태에서 로그인 페이지(`/login`)에 접근 시 홈 `/`로 리다이렉트합니다.
@@ -28,7 +28,7 @@
 3. **Confirm email** 설정을 비활성화(Off)로 전환하고 저장합니다.
 
 ### 2) 인증 관련 클라이언트 API 연동
-클라이언트 컴포넌트에서는 `@/utils/supabase/client`에서 제공하는 `createClient`를 활용하여 Supabase 인스턴스를 얻고 로그인/회원가입/로그아웃을 수행합니다.
+클라이언트 컴포넌트에서는 `@/lib/supabase/client`에서 제공하는 `createClient`를 활용하여 Supabase 인스턴스를 얻고 로그인/회원가입/로그아웃을 수행합니다.
 
 * **로그인**:
   ```typescript

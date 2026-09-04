@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { Receiver } from '@upstash/qstash'
 import webpush from 'web-push'
 import type { NextRequest } from 'next/server'

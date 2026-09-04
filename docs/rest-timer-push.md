@@ -150,9 +150,9 @@ sequenceDiagram
 
 ## 📁 관련 파일 목록
 
-*   **[`src/utils/supabase/server.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/server.ts)**: 일반 쿠키 기반 클라이언트(`createClient`) 및 백그라운드 작업용 RLS 우회 관리자 클라이언트(`createAdminClient`) 생성을 담당하는 헬퍼.
-*   **[`src/utils/supabase/middleware.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/utils/supabase/middleware.ts)**: 요청 경로별 세션 제어 및 페이지 보호 미들웨어. `/api/push/fire` 및 서비스 워커 에셋은 DB 조회 전에 조기 허용하도록 최적화되어 있습니다.
-*   **[`src/providers/PushProvider.tsx`](file:///Users/ryuhojun/Documents/project/health_app/src/providers/PushProvider.tsx)**: 앱 전역 푸시 알림 구독 상태 관리 Context.
+*   **`src/lib/supabase/server.ts`**: 일반 쿠키 기반 클라이언트(`createClient`) 및 백그라운드 작업용 RLS 우회 관리자 클라이언트(`createAdminClient`) 생성을 담당하는 헬퍼.
+*   **`src/lib/supabase/session.ts`**: 요청 경로별 세션 제어 및 페이지 보호 로직. `/api/push/fire` 및 서비스 워커 에셋은 DB 조회 전에 조기 허용하도록 최적화되어 있습니다.
+*   **`src/app/_providers/PushProvider.tsx`**: 앱 전역 푸시 알림 구독 상태 관리 Context.
 *   **[`src/hooks/useRestTimer.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/hooks/useRestTimer.ts)**: 클라이언트 측 카운트다운 타이머 및 시작/취소 API 래핑 훅.
 *   **[`src/app/api/timer/start/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/start/route.ts)**: 타이머 생성 및 QStash 예약 (`Host` 헤더 기반 동적 URL 확인 및 로컬 테스트 분기 포함).
 *   **[`src/app/api/timer/cancel/route.ts`](file:///Users/ryuhojun/Documents/project/health_app/src/app/api/timer/cancel/route.ts)**: 타이머 DB 상태를 `cancelled`로 변경.

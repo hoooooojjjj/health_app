@@ -6,16 +6,17 @@
 
 ## 컴포넌트 구조
 
-- `src/app/page.tsx`: 정적 페이지 구조를 담당하는 서버 컴포넌트
-- `src/components/WorkoutCalendar/WorkoutCalendar.tsx`: 표시 월과 선택 날짜를 관리하는 클라이언트 컴포넌트
-- `src/components/WorkoutCalendar/calendar.utils.ts`: 월별 날짜 배열 생성과 월 이동을 담당하는 순수 함수
-- `src/components/WorkoutCalendar/WorkoutCalendar.module.css`: 캘린더 전용 스타일
+- `src/app/(main)/page.tsx`: 정적 페이지 구조를 담당하는 서버 컴포넌트
+- `src/app/(main)/_components/WorkoutCalendar/WorkoutCalendar.tsx`: 캘린더 표시와 이벤트 연결을 담당하는 클라이언트 컴포넌트
+- `src/app/(main)/_components/WorkoutCalendar/hooks/useWorkoutCalendar.ts`: 표시 월과 선택 날짜 상태 관리
+- `src/app/(main)/_components/WorkoutCalendar/utils/calendar.ts`: 월별 날짜 배열 생성과 월 이동을 담당하는 순수 함수
+- 같은 컴포넌트 폴더의 `types.ts`, `constants.ts`, `WorkoutCalendar.module.css`: 타입, 상수, 캘린더 전용 스타일
 
 페이지 전체를 클라이언트 컴포넌트로 만들지 않고 상호작용이 필요한 캘린더만 클라이언트 경계로 분리합니다.
 
 ## 현재 동작
 
-- 한 주는 일요일부터 시작합니다.
+- 한 주는 월요일부터 시작합니다.
 - 항상 6주, 총 42개의 셀을 렌더링하여 월이 바뀌어도 높이가 유지됩니다.
 - 초기 표시 월은 사용자 브라우저의 현재 월이며 오늘 날짜를 기본 선택합니다.
 - 정적 생성 시점의 날짜가 고정되지 않도록 브라우저 하이드레이션 이후 로컬 날짜를 표시합니다.
@@ -25,6 +26,6 @@
 
 ## 확장 원칙
 
-월별 운동 데이터가 추가되면 서버 또는 별도 데이터 계층에서 조회한 직렬화 가능한 값을 캘린더에 전달합니다. 날짜 계산 유틸리티에는 데이터 조회나 UI 상태를 포함하지 않습니다.
+월별 운동 데이터가 추가되면 서버 또는 별도 데이터 계층에서 조회한 직렬화 가능한 값을 캘린더에 전달합니다. 날짜 계산 유틸리티에는 데이터 조회나 UI 상태를 포함하지 않습니다. 메인 화면에서만 사용하는 코드는 `(main)` 라우트 그룹 내부에 유지합니다.
 
 운동 기록 도트, 일간 상세 시트, 세션 이동 같은 기능은 요구사항이 확정된 뒤 별도 컴포넌트로 추가합니다. 캘린더 컴포넌트가 Supabase를 직접 호출하지 않도록 유지합니다.

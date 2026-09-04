@@ -1,4 +1,4 @@
-import { WorkoutCalendar } from '@/components/WorkoutCalendar/WorkoutCalendar'
+import { WorkoutCalendar } from './_components/WorkoutCalendar/WorkoutCalendar'
 import styles from './page.module.css'
 
 export default function HomePage() {

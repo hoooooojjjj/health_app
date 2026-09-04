@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 
-// ---- 타입 정의 ----
+// 푸시 알림 상태 타입
 export type PushStatus =
   | 'idle'         // 초기 상태
   | 'requesting'   // 권한 요청 중

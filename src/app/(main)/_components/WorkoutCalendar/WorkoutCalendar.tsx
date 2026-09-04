@@ -1,48 +1,24 @@
 'use client'
 
-import { useMemo, useState, useSyncExternalStore } from 'react'
 import {
-  createCalendarDate,
-  createCalendarDays,
-  moveCalendarMonth,
-  type CalendarDate,
-  type CalendarMonth,
-} from './calendar.utils'
+  SATURDAY_INDEX,
+  SUNDAY_INDEX,
+  WEEKDAYS,
+} from './constants'
+import { useWorkoutCalendar } from './hooks/useWorkoutCalendar'
+import { isSameCalendarDate } from './utils/calendar'
 import styles from './WorkoutCalendar.module.css'
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
-const subscribeToHydration = () => () => undefined
-
-function isSameDate(left: CalendarDate | null, right: CalendarDate): boolean {
-  return (
-    left?.year === right.year &&
-    left.monthIndex === right.monthIndex &&
-    left.day === right.day
-  )
-}
-
 export function WorkoutCalendar() {
-  const isHydrated = useSyncExternalStore(
-    subscribeToHydration,
-    () => true,
-    () => false
-  )
-  const [today] = useState(() => createCalendarDate(new Date()))
-  const [visibleMonth, setVisibleMonth] = useState<CalendarMonth>(() => ({
-    year: today.year,
-    monthIndex: today.monthIndex,
-  }))
-  const [selectedDate, setSelectedDate] = useState<CalendarDate | null>(today)
-
-  const calendarDays = useMemo(
-    () => createCalendarDays(visibleMonth),
-    [visibleMonth]
-  )
-
-  const changeMonth = (offset: number) => {
-    setVisibleMonth((currentMonth) => moveCalendarMonth(currentMonth, offset))
-    setSelectedDate(null)
-  }
+  const {
+    calendarDays,
+    changeMonth,
+    isHydrated,
+    selectedDate,
+    selectDate,
+    today,
+    visibleMonth,
+  } = useWorkoutCalendar()
 
   if (!isHydrated) {
     return (
@@ -87,9 +63,9 @@ export function WorkoutCalendar() {
           <span
             key={weekday}
             className={`${styles.weekday} ${
-              index === 0
+              index === SUNDAY_INDEX
                 ? styles.sunday
-                : index === 6
+                : index === SATURDAY_INDEX
                   ? styles.saturday
                   : ''
             }`}
@@ -110,8 +86,8 @@ export function WorkoutCalendar() {
             monthIndex: visibleMonth.monthIndex,
             day,
           }
-          const isToday = isSameDate(today, date)
-          const isSelected = isSameDate(selectedDate, date)
+          const isToday = isSameCalendarDate(today, date)
+          const isSelected = isSameCalendarDate(selectedDate, date)
           const weekdayIndex = index % WEEKDAYS.length
 
           return (
@@ -121,16 +97,16 @@ export function WorkoutCalendar() {
               className={`${styles.dayButton} ${
                 isToday ? styles.today : ''
               } ${isSelected ? styles.selected : ''} ${
-                weekdayIndex === 0
+                weekdayIndex === SUNDAY_INDEX
                   ? styles.sunday
-                  : weekdayIndex === 6
+                  : weekdayIndex === SATURDAY_INDEX
                     ? styles.saturday
                     : ''
               }`}
               aria-label={`${date.year}년 ${date.monthIndex + 1}월 ${day}일`}
               aria-current={isToday ? 'date' : undefined}
               aria-pressed={isSelected}
-              onClick={() => setSelectedDate(date)}
+              onClick={() => selectDate(date)}
             >
               {day}
             </button>

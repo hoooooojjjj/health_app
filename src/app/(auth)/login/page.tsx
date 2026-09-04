@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuthForm } from '@/hooks/useAuthForm'
+import { useAuthForm } from './_hooks/useAuthForm'
 import styles from './page.module.css'
 
 export default function LoginPage() {

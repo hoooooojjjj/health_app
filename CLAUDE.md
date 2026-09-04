@@ -23,9 +23,10 @@
 
 ## 🛠️ 2. Technology Stack & Directory Structure
 
-* **Next.js 15+ (App Router)**: SSR 중심 아키텍처. Hydration 방지를 위해 `layout.tsx`에 `suppressHydrationWarning` 필수 적용.
+* **Next.js 16 (App Router)**: 서버 컴포넌트를 기본으로 사용하고 상호작용이 필요한 최소 영역만 클라이언트 컴포넌트로 분리합니다.
 * **Supabase SSR & Auth**: 쿠키 세션 기반 사용자 인증 및 RLS 적용.
 * **Upstash QStash**: 서버리스 환경의 한계를 극복하는 비동기 지연 큐 관리.
+* **Co-location**: 화면 전용 코드는 App Router의 Route Group 및 Private Folder 내부에 배치합니다. 세부 규칙은 `docs/project-structure.md`를 따릅니다.
 
 ---
 
@@ -46,4 +47,3 @@
 1. **Language & Comments**: 모든 소스 코드 내의 주석, 문서 및 커밋 메시지는 **한국어**로만 작성합니다.
 2. **Styling Paradigm**: Tailwind CSS는 사용하지 않으며, **CSS Module** (`*.module.css`) 기반의 스타일링 방식을 적용합니다.
 3. **Database RLS & Key Isolation**: 외부 노출용 키는 `anon` key에 국한하며, `service_role` key는 서버사이드 전용으로 브라우저 노출을 금지합니다.
-

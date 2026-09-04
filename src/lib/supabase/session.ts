@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Proxy에서 Supabase 인증 세션을 갱신하고 접근을 제어합니다.
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -15,7 +16,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -47,8 +48,8 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  // IMPORTANT: Do not run any code between createServerClient and getUser.
-  // getUser() makes an API call to Supabase to verify/refresh the session token.
+  // 클라이언트 생성과 getUser 호출 사이에는 다른 로직을 실행하지 않습니다.
+  // getUser는 Supabase에 요청하여 세션 토큰을 검증하고 갱신합니다.
   const { data: { user } } = await supabase.auth.getUser()
 
   // 3. API 경로 보호 (/api/push/subscribe, /api/timer/start 등)
@@ -77,4 +78,3 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse
 }
-

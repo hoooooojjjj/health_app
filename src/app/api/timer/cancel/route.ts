@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 // POST /api/timer/cancel — 휴식 타이머 취소 (건너뛰기)

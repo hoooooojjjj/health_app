@@ -1,3 +1,4 @@
+/* 메인 화면 전용 월간 캘린더 */
 .calendar {
   width: 100%;
   min-height: 398px;
@@ -41,18 +42,16 @@
   font: inherit;
   font-size: var(--fs-lg);
   background-color: transparent;
-  border: 1px solid var(--border-default);
+  border: none;
   cursor: pointer;
   transition:
     color var(--transition-fast),
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
+    background-color var(--transition-fast);
 }
 
 .navigationButton:hover {
   color: var(--accent-green-light);
   background-color: var(--accent-green-dim);
-  border-color: var(--accent-green-border);
 }
 
 .navigationButton:focus-visible,
