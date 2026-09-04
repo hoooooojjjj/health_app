@@ -8,8 +8,13 @@ import dotenv from 'dotenv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 최상위 .env.local 또는 .env 로드
-dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+// .env.local을 우선 적용하고, 누락된 값은 .env에서 불러옵니다.
+dotenv.config({
+  path: [
+    path.join(__dirname, '..', '.env.local'),
+    path.join(__dirname, '..', '.env'),
+  ].filter((envPath) => fs.existsSync(envPath)),
+});
 
 // 환경 변수에서 API 키를 읽습니다. (없으면 에러)
 const apiKey = process.env.ANTHROPIC_API_KEY;
