@@ -39,6 +39,8 @@ src/app/(main)/
 
 처음부터 재사용을 예상해 전역으로 올리지 않습니다. 두 개 이상의 사용처가 확인될 때 화면 내부 코드를 전역 폴더로 승격합니다.
 
+현재 `AppLayout`과 `Footer`는 `/`와 `/routine`에서 공유하므로 `src/components`가 소유합니다. 두 화면은 `src/app/(main)/layout.tsx`에서 공통 조합하고, 푸터가 필요 없는 화면은 `(main)` 밖에 배치합니다. 탭 구성과 확장 방법은 `docs/features/footer-navigation.md`에서 관리합니다.
+
 ## 컴포넌트 내부 분리 기준
 
 - 컴포넌트 파일은 JSX 구조와 이벤트 연결을 담당합니다.
