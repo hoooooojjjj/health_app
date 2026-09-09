@@ -60,3 +60,14 @@ Supabase 테이블들은 사용자의 개인 정보 보호를 위해 RLS 정책�
 ### 3) `exercises` RLS
 *   **정책**: 읽기(SELECT)는 모든 유저 허용, 쓰기는 `service_role` (관리자)만 허용
 *   **조건**: `USING (true)`
+
+### 4) `routines` RLS
+*   **정책**: 인증된 사용자는 본인 `user_id`의 루틴만 조회하고 생성 가능
+*   **조회 조건**: `auth.uid() = user_id`
+*   **생성 조건**: `auth.uid() = user_id`
+
+### 5) `routine_exercises` RLS
+*   **정책**: 부모 루틴이 현재 사용자의 소유일 때만 연결 운동을 조회하고 생성 가능
+*   **조건**: `routine_exercises.routine_id`와 연결된 `routines.user_id = auth.uid()`
+
+루틴 생성은 `create_routine_with_exercises` 함수를 사용합니다. 이 함수는 `security invoker`로 실행되어 호출 사용자의 RLS를 그대로 적용하며, 루틴과 운동 목록을 하나의 트랜잭션으로 저장합니다. 관련 스키마는 `supabase/migrations/20260909090000_create_routines.sql`에서 관리합니다.

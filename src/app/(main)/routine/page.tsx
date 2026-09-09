@@ -1,23 +1,35 @@
+import Link from 'next/link'
+import { RoutineCard } from './_components/RoutineCard/RoutineCard'
+import { RoutineEmptyState } from './_components/RoutineEmptyState/RoutineEmptyState'
+import { getUserRoutines } from './_data/routines'
 import styles from './page.module.css'
 
-export default function RoutinePage() {
+export default async function RoutinePage() {
+  const routines = await getUserRoutines()
+
   return (
     <>
       <header className={styles.header}>
-        <p className={styles.eyebrow}>WORKOUT</p>
-        <h1 className={styles.title}>루틴</h1>
+        <div>
+          <p className={styles.eyebrow}>WORKOUT</p>
+          <h1 className={styles.title}>나의 루틴</h1>
+        </div>
+        <Link href="/routine/new" className={styles.addButton}>
+          <span aria-hidden="true">+</span>
+          새 루틴
+        </Link>
       </header>
 
       <main className={styles.main}>
-        <section className={styles.placeholder} aria-labelledby="routine-placeholder-title">
-          <span className={styles.placeholderIcon} aria-hidden="true">+</span>
-          <h2 id="routine-placeholder-title" className={styles.placeholderTitle}>
-            아직 등록된 루틴이 없습니다
-          </h2>
-          <p className={styles.placeholderDescription}>
-            루틴 구성 기능은 다음 단계에서 추가합니다.
-          </p>
-        </section>
+        {routines.length > 0 ? (
+          <ul className={styles.routineList}>
+            {routines.map((routine) => (
+              <RoutineCard key={routine.id} routine={routine} />
+            ))}
+          </ul>
+        ) : (
+          <RoutineEmptyState />
+        )}
       </main>
     </>
   )

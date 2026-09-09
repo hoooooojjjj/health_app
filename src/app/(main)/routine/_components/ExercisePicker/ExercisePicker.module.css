@@ -1,0 +1,157 @@
+.section {
+  margin-top: 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.step {
+  color: var(--accent-green);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+}
+
+.title {
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+}
+
+.status {
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.searchField {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background-color: var(--bg-card-hover);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.searchField:focus-within {
+  border-color: var(--accent-green-border-hover);
+  box-shadow: var(--glow-green);
+}
+
+.searchIcon {
+  color: var(--text-tertiary);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.searchInput {
+  min-width: 0;
+  flex: 1;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.filterField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.filterLabel {
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.select {
+  min-height: 36px;
+  padding: 0 30px 0 10px;
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--fs-xs);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.results {
+  margin-top: 12px;
+  padding: 0 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.results[aria-busy='true'] {
+  opacity: 0.65;
+}
+
+.addButton {
+  min-width: 54px;
+  min-height: 36px;
+  padding: 0 10px;
+  color: var(--accent-green-light);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  border: 1px solid var(--accent-green-border);
+  border-radius: var(--radius-sm);
+}
+
+.addButton:hover:not(:disabled) {
+  background-color: var(--accent-green-dim);
+  border-color: var(--accent-green-border-hover);
+}
+
+.addButton:disabled {
+  cursor: default;
+  color: var(--text-muted);
+  border-color: var(--border-default);
+}
+
+.addButton:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.empty,
+.error {
+  padding: 28px 10px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.error {
+  padding: 12px 0 0;
+  color: #f87171;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

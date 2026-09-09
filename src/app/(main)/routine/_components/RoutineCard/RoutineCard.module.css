@@ -1,0 +1,79 @@
+.card {
+  min-height: 136px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 18px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.card:active {
+  transform: scale(0.99);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 3px;
+}
+
+.icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  color: var(--bg-base);
+  font-size: var(--fs-md);
+  font-weight: 800;
+  background-color: var(--accent-green);
+  border-radius: var(--radius-full);
+  box-shadow: var(--glow-green);
+}
+
+.content {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--fs-lg);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muscles {
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--accent-green-light);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.chevron {
+  color: var(--text-tertiary);
+  font-size: 28px;
+  line-height: 1;
+}

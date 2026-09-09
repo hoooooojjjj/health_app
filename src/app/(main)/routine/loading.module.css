@@ -1,0 +1,17 @@
+.loading {
+  min-height: 60svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-green);
+  border-radius: var(--radius-full);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}

@@ -1,0 +1,152 @@
+.form {
+  padding-bottom: 92px;
+}
+
+.step {
+  color: var(--accent-green);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+}
+
+.sectionTitle {
+  margin-top: 2px;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+}
+
+.nameField {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  margin-top: 14px;
+  padding: 0 14px;
+  background-color: var(--bg-card-hover);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+}
+
+.nameField:focus-within {
+  border-color: var(--accent-green-border-hover);
+  box-shadow: var(--glow-green);
+}
+
+.nameInput {
+  width: 100%;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+}
+
+.nameInput::placeholder {
+  color: var(--text-tertiary);
+}
+
+.selectedSection {
+  margin-top: 30px;
+}
+
+.selectedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count {
+  color: var(--accent-green-light);
+  font-size: var(--fs-xs);
+}
+
+.selectedList {
+  margin-top: 12px;
+  padding: 0 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--accent-green-border);
+  border-radius: var(--radius-sm);
+}
+
+.selectedEmpty {
+  margin-top: 12px;
+  padding: 24px 16px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.removeButton {
+  min-width: 48px;
+  min-height: 36px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.removeButton:hover {
+  color: #f87171;
+}
+
+.removeButton:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+}
+
+.fieldError,
+.formError {
+  margin-top: 8px;
+  color: #f87171;
+  font-size: var(--fs-xs);
+}
+
+.formError {
+  text-align: center;
+}
+
+.submitArea {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: var(--z-base);
+  margin: 24px -16px -92px;
+  padding: 14px 16px;
+  background: linear-gradient(to bottom, transparent, var(--bg-app) 24%);
+}
+
+.submitButton {
+  width: 100%;
+  min-height: 50px;
+  color: var(--bg-base);
+  font-weight: 800;
+  background-color: var(--accent-green);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--glow-green);
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--accent-green-light);
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+  color: var(--text-tertiary);
+  background-color: var(--text-disabled);
+  box-shadow: none;
+}
+
+.submitButton:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 3px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,84 @@
+.header {
+  min-height: 128px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 36px 20px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.backButton {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  color: var(--text-primary);
+  font-size: 34px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+}
+
+.backButton:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.backButton:focus-visible {
+  outline: 2px solid var(--accent-green);
+}
+
+.heading {
+  min-width: 0;
+}
+
+.eyebrow {
+  color: var(--accent-green);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest);
+}
+
+.title {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--fs-xl);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary {
+  margin-top: 3px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.main {
+  padding: 24px 16px 40px;
+}
+
+.sectionTitle {
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-wide);
+}
+
+.exerciseList {
+  padding: 0 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 389px) {
+  .header {
+    padding-inline: 12px;
+  }
+
+  .main {
+    padding-inline: 12px;
+  }
+}
